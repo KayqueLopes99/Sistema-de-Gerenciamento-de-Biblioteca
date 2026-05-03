@@ -1,7 +1,18 @@
 package com.biblioteca.gerenciador.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+
+
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "avaliacao")
 public class Avaliacao {
@@ -16,10 +27,6 @@ public class Avaliacao {
     @ManyToOne
     @JoinColumn(name = "id_leitor")
     private Leitor leitor;
-
-   
-    public Avaliacao() {
-    }
 
     public Avaliacao(int idAvaliacao, int nota, String comentario) {
         this.idAvaliacao = idAvaliacao;

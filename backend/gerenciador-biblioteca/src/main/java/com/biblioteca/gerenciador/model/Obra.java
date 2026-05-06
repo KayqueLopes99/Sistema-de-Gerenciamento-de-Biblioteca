@@ -17,8 +17,10 @@ public class Obra {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idObra;
 
+    @Column(nullable = false)
     private String titulo;
     
+    @Column(nullable = false)
     private String autor;
 
     @Column(unique = true, nullable = false)

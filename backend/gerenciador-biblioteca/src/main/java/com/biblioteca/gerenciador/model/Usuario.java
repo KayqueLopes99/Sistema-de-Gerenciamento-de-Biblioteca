@@ -19,11 +19,13 @@ public abstract class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idUsuario;
 
+    @Column(nullable = false)
     private String nome;
 
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(nullable = false)
     private String senha;
 
     @Enumerated(EnumType.STRING)

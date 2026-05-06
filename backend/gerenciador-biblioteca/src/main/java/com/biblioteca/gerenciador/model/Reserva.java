@@ -26,10 +26,11 @@ public class Reserva {
     private LocalDate dataReserva;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status_reserva")
     private StatusReserva status;
 
     @ManyToOne
-    @JoinColumn(name = "id_leitor")
+    @JoinColumn(name = "id_usuario")
     private Leitor leitor;
 
     @ManyToOne

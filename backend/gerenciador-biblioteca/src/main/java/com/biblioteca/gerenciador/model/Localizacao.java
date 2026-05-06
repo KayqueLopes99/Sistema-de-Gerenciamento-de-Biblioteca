@@ -26,21 +26,5 @@ public class Localizacao {
 
     @OneToMany(mappedBy = "localizacao")
     private List<Exemplar> exemplares;
-    // Uma Localizacao pode ter vários Exemplares
-    // mappedBy indica que o relacionamento é controlado pelo atributo "localizacao" na classe Exemplar
 
-    // public Localizacao(int idLocalizacao, String sala, String estante, String sessao, String descricao) {
-    //     this.idLocalizacao = idLocalizacao;
-    //     this.sala = sala;
-    //     this.estante = estante;
-    //     this.sessao = sessao;
-    //     this.descricao = descricao;
-    // }
-
-    // public Localizacao(String sala, String estante, String sessao, String descricao) {
-    //     this.sala = sala;
-    //     this.estante = estante;
-    //     this.sessao = sessao;
-    //     this.descricao = descricao;
-    // }
 }

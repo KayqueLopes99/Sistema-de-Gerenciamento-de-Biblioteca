@@ -4,5 +4,4 @@ public enum StatusLeitor {
     ATIVO, 
     SUSPENSO, 
     PENDENTE_APROVACAO
-
 }

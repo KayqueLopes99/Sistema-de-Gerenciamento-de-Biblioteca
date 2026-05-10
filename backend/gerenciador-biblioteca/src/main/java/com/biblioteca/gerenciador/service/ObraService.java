@@ -49,4 +49,46 @@ public class ObraService {
     public List<Obra> buscarObras(String termo) {
         return obraRepository.findByTituloContainingIgnoreCase(termo);
     }
+
+    @Transactional
+    public void editarObra(int idObra, ObraRequestDTO dto) {
+        Obra obra = obraRepository.findById(idObra)
+                .orElseThrow(() -> new RuntimeException("Obra não encontrada"));
+
+        
+        obraRepository.findByIsbn(dto.getIsbn()).ifPresent(outraObra -> {
+            if (outraObra.getIdObra() != idObra) {
+                throw new RuntimeException("Este ISBN já está cadastrado em outra obra");
+            }
+        });
+
+        obra.setTitulo(dto.getTitulo());
+        obra.setAutor(dto.getAutor());
+        obra.setIsbn(dto.getIsbn());
+        obra.setEditora(dto.getEditora());
+        obra.setAnoPublicacao(dto.getAnoPublicacao());
+        obra.setEdicao(dto.getEdicao());
+        obra.setIdioma(dto.getIdioma());
+        obra.setSinopse(dto.getSinopse());
+        obra.setUrlCapa(dto.getUrlCapa());
+        obra.setPaginas(dto.getPaginas());
+
+        if (dto.getIdsCategorias() != null && !dto.getIdsCategorias().isEmpty()) {
+            List<Categoria> categorias = categoriaRepository.findAllById(dto.getIdsCategorias());
+            obra.setCategorias(categorias);
+        } else {
+            obra.setCategorias(new ArrayList<>());
+        }
+
+        obraRepository.save(obra);
+    }
+
+    @Transactional
+    public void removerObra(int idObra) {
+        if (!obraRepository.existsById(idObra)) {
+            throw new RuntimeException("Obra não encontrada para remoção");
+        }
+     
+        obraRepository.deleteById(idObra);
+    }
 }

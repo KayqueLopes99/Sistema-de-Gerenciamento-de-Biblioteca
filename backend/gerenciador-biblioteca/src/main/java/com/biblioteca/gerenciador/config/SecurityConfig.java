@@ -26,11 +26,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                //ENDPOINTS PÚBLICOS (não precisam de token)
+
                 .requestMatchers("/api/usuarios/login").permitAll()
                 .requestMatchers("/api/usuarios/auto-cadastro").permitAll()
-                .requestMatchers("/api/acervo/buscar").permitAll()  // Busca pública
-                // TODO RESTO precisa de token
+                .requestMatchers("/api/acervo/buscar").permitAll()  
+                
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

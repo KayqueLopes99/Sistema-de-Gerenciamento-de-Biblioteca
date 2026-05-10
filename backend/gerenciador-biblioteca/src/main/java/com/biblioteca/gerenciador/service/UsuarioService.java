@@ -10,12 +10,15 @@ import com.biblioteca.gerenciador.model.Usuario;
 import com.biblioteca.gerenciador.repository.LeitorRepository;
 import com.biblioteca.gerenciador.repository.UsuarioRepository;
 import com.biblioteca.gerenciador.security.JwtUtil;
+import com.biblioteca.gerenciador.util.CpfValidator;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +55,11 @@ public class UsuarioService {
 
     @Transactional
     public void solicitarAutoCadastro(LeitorRequestDTO dto) {
+
+        if (!CpfValidator.isValid(dto.getCpf())) {
+            throw new RuntimeException("O CPF informado é inválido");
+        }
+
         // Validações (dados já vêm limpos do DTO)
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new RuntimeException("Email já cadastrado");
@@ -67,6 +75,11 @@ public class UsuarioService {
 
     @Transactional
     public void cadastrarLeitor(LeitorRequestDTO dto) {
+
+        if (!CpfValidator.isValid(dto.getCpf())) {
+            throw new RuntimeException("O CPF informado é inválido");
+        }
+
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new RuntimeException("Email já cadastrado");
         }
@@ -81,6 +94,11 @@ public class UsuarioService {
 
     @Transactional
     public void editarLeitor(int idLeitor, LeitorRequestDTO dto) {
+
+        if (!CpfValidator.isValid(dto.getCpf())) {
+            throw new RuntimeException("Não é possível salvar um CPF inválido");
+        }
+        
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
         

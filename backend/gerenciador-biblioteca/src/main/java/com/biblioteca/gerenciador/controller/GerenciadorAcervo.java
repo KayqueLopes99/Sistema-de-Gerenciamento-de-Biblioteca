@@ -1,5 +1,6 @@
 package com.biblioteca.gerenciador.controller;
 
+import com.biblioteca.gerenciador.dto.DisponibilidadeDTO;
 import com.biblioteca.gerenciador.dto.ExemplarRequestDTO;
 import com.biblioteca.gerenciador.dto.LocalizacaoRequestDTO;
 import com.biblioteca.gerenciador.dto.ObraRequestDTO;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/acervo")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class GerenciadorAcervo {
 
     private final ObraService obraService;
@@ -24,26 +26,31 @@ public class GerenciadorAcervo {
     private final LocalizacaoService localizacaoService;
 
     @PostMapping("/obras")
-    @PreAuthorize("hasRole('BIBLIOTECARIO')") 
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
     public ResponseEntity<Void> cadastrarObra(@Valid @RequestBody ObraRequestDTO dto) {
         obraService.cadastrarObra(dto);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<List<Obra>> buscarObras(@RequestParam String termo) {
-        return ResponseEntity.ok(obraService.buscarObras(termo));
+    public ResponseEntity<List<Obra>> buscar(
+            @RequestParam(required = false) String termo,
+            @RequestParam(required = false) Integer ano, 
+            @RequestParam(required = false) String categoria, 
+            @RequestParam(defaultValue = "false") boolean emAlta 
+    ) {
+        return ResponseEntity.ok(obraService.buscarObrasAvancada(termo, ano, categoria, emAlta));
     }
 
     @PutMapping("/obras/{id}")
-    @PreAuthorize("hasRole('BIBLIOTECARIO')") 
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
     public ResponseEntity<Void> editarObra(@PathVariable int id, @Valid @RequestBody ObraRequestDTO dto) {
         obraService.editarObra(id, dto);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/obras/{id}")
-    @PreAuthorize("hasRole('BIBLIOTECARIO')") 
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
     public ResponseEntity<Void> removerObra(@PathVariable int id) {
         obraService.removerObra(id);
         return ResponseEntity.noContent().build();
@@ -87,10 +94,15 @@ public class GerenciadorAcervo {
     @PatchMapping("/exemplares/{idExemplar}/localizacao/{idLocalizacao}")
     @PreAuthorize("hasRole('BIBLIOTECARIO')")
     public ResponseEntity<Void> associarLocalizacao(
-            @PathVariable int idExemplar, 
+            @PathVariable int idExemplar,
             @PathVariable int idLocalizacao) {
-        
+
         exemplarService.associarLocalizacao(idExemplar, idLocalizacao);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/obras/{idObra}/disponibilidade")
+    public ResponseEntity<DisponibilidadeDTO> verificarDisponibilidade(@PathVariable int idObra) {
+        return ResponseEntity.ok(exemplarService.consultarDisponibilidade(idObra));
     }
 }

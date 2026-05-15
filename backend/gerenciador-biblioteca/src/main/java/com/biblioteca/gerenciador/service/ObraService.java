@@ -4,12 +4,13 @@ import com.biblioteca.gerenciador.dto.ObraRequestDTO;
 import com.biblioteca.gerenciador.model.Categoria;
 import com.biblioteca.gerenciador.model.Obra;
 import com.biblioteca.gerenciador.repository.CategoriaRepository;
-import com.biblioteca.gerenciador.repository.ObraRepository;
 import lombok.RequiredArgsConstructor;
+import com.biblioteca.gerenciador.repository.ObraRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -46,8 +47,32 @@ public class ObraService {
         obraRepository.save(obra);
     }
 
-    public List<Obra> buscarObras(String termo) {
-        return obraRepository.findByTituloContainingIgnoreCase(termo);
+    public List<Obra> buscarObrasAvancada(String termo, Integer ano, String categoria, boolean emAlta) {
+        if (emAlta) {
+            return obraRepository.findLivrosEmAlta();
+        }
+
+        if (termo != null && termo.matches("^(97(8|9))?\\d{9}(\\d|X)$")) {
+            return obraRepository.findByIsbn(termo).map(List::of).orElse(List.of());
+        }
+
+        if (ano != null) {
+            return obraRepository.findByAnoPublicacao(ano);
+        }
+
+        if (categoria != null && !categoria.isBlank()) {
+            return obraRepository.findByCategoriasNomeContainingIgnoreCase(categoria);
+        }
+
+        if (termo != null && !termo.isBlank()) {
+            List<Obra> porTitulo = obraRepository.findByTituloContainingIgnoreCase(termo);
+            if (!porTitulo.isEmpty())
+                return porTitulo;
+
+            return obraRepository.findByAutorContainingIgnoreCase(termo);
+        }
+
+        return obraRepository.findAll();
     }
 
     @Transactional
@@ -55,7 +80,6 @@ public class ObraService {
         Obra obra = obraRepository.findById(idObra)
                 .orElseThrow(() -> new RuntimeException("Obra não encontrada"));
 
-        
         obraRepository.findByIsbn(dto.getIsbn()).ifPresent(outraObra -> {
             if (outraObra.getIdObra() != idObra) {
                 throw new RuntimeException("Este ISBN já está cadastrado em outra obra");
@@ -88,7 +112,8 @@ public class ObraService {
         if (!obraRepository.existsById(idObra)) {
             throw new RuntimeException("Obra não encontrada para remoção");
         }
-     
+
         obraRepository.deleteById(idObra);
     }
+
 }

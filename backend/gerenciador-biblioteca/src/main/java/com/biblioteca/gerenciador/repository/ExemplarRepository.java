@@ -12,4 +12,5 @@ public interface ExemplarRepository extends JpaRepository<Exemplar, Integer> {
     List<Exemplar> findByObra_IdObra(int idObra);
     List<Exemplar> findByStatus(StatusExemplar status);
     Optional<Exemplar> findByCodigoBarras(String codigoBarras);
+    List<Exemplar> findByObraIdObraAndStatus(int idObra, StatusExemplar status);
 }

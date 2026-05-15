@@ -4,6 +4,7 @@ import com.biblioteca.gerenciador.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -30,6 +31,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/usuarios/login").permitAll()
                 .requestMatchers("/api/usuarios/auto-cadastro").permitAll()
                 .requestMatchers("/api/acervo/buscar").permitAll()  
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/**").permitAll()
+                
                 
                 .anyRequest().authenticated()
             )

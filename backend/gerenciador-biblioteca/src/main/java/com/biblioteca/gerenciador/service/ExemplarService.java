@@ -1,6 +1,8 @@
 package com.biblioteca.gerenciador.service;
 
+import com.biblioteca.gerenciador.dto.DisponibilidadeDTO;
 import com.biblioteca.gerenciador.dto.ExemplarRequestDTO;
+import com.biblioteca.gerenciador.enums.StatusExemplar;
 import com.biblioteca.gerenciador.model.Exemplar;
 import com.biblioteca.gerenciador.model.Localizacao;
 import com.biblioteca.gerenciador.model.Obra;
@@ -92,5 +94,23 @@ public class ExemplarService {
         exemplar.setLocalizacao(localizacao);
         
         exemplarRepository.save(exemplar);
+    }
+
+    public DisponibilidadeDTO consultarDisponibilidade(int idObra) {
+        // Busca todos os exemplares disponíveis para aquela obra
+        List<Exemplar> exemplaresDisponiveis = exemplarRepository.findByObraIdObraAndStatus(idObra, StatusExemplar.DISPONIVEL);
+
+        boolean estaDisponivel = !exemplaresDisponiveis.isEmpty();
+        
+        // Mapeia a localização de cada exemplar disponível em uma lista de strings
+        List<String> localizacoes = exemplaresDisponiveis.stream()
+            .map(ex -> {
+                Localizacao loc = ex.getLocalizacao();
+                return String.format("%s, %s, %s", loc.getSala(), loc.getEstante(), loc.getSessao());
+            })
+            .distinct() // Evita repetir a mesma localização se houver vários exemplares no mesmo lugar
+            .toList();
+
+        return new DisponibilidadeDTO(estaDisponivel, localizacoes);
     }
 }

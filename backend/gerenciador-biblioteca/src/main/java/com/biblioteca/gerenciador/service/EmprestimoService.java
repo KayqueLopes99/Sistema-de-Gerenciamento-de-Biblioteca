@@ -26,10 +26,10 @@ public class EmprestimoService {
     private final LeitorRepository leitorRepository;
     private final ReservaRepository reservaRepository;
 
-    private static final int DIAS_EMPReSTIMO = 14; // 14 dias de empréstimo
-    private static final int MAX_RENOVACOES = 2;   // Máximo 2 renovações
-    private static final int DIAS_RENOVACAO = 7;   // Renovação por +7 dias
-
+    private static final int DIAS_EMPReSTIMO = 14; 
+    private static final int MAX_RENOVACOES = 2;  
+    private static final int DIAS_RENOVACAO = 7;   
+    private static final int MAX_EMPRESTIMOS_ATIVOS = 5;
 
     @Transactional(readOnly = true)
     public List<Emprestimo> consultarHistoricoLeitor(int idLeitor) {
@@ -103,11 +103,16 @@ public class EmprestimoService {
         Exemplar exemplar = exemplarRepository.findById(idExemplar)
                 .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
         
-        // Verifica se leitor está ativo
+   
         if (leitor.getStatusLeitor() != StatusLeitor.ATIVO) {
             throw new RuntimeException("Leitor não está ativo para realizar empréstimos");
         }
-        
+
+            long emprestimosAtivos = emprestimoRepository.countByLeitorAndDataDevolucaoRealIsNull(leitor);
+            if (emprestimosAtivos >= MAX_EMPRESTIMOS_ATIVOS) {
+                throw new RuntimeException("Limite de empréstimos ativos atingido (máximo " + MAX_EMPRESTIMOS_ATIVOS + " livros)");
+            }
+                    
         // Verifica se leitor tem suspensão ativa
         if (leitor.getDataFimSuspensao() != null && leitor.getDataFimSuspensao().isAfter(LocalDate.now())) {
             throw new RuntimeException("Leitor está suspenso até " + leitor.getDataFimSuspensao());

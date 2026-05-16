@@ -92,4 +92,16 @@ public class GerenciadorEmprestimo {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+
+@PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'LEITOR')")
+@GetMapping("/multa/{idEmprestimo}")
+public ResponseEntity<?> calcularMulta(@PathVariable int idEmprestimo) {
+    try {
+        double multa = emprestimoService.calcularMulta(idEmprestimo);
+        return ResponseEntity.ok().body("Multa: R$ " + String.format("%.2f", multa));
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+}
 }

@@ -205,7 +205,6 @@ public double registrarDevolucao(int idExemplar) {
     Exemplar exemplar = exemplarRepository.findById(idExemplar)
             .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
     
-   
     Emprestimo emprestimo = emprestimoRepository
             .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(idExemplar)
             .orElseThrow(() -> new RuntimeException("Não há empréstimo ativo para este exemplar"));
@@ -213,23 +212,19 @@ public double registrarDevolucao(int idExemplar) {
     LocalDate dataDevolucao = LocalDate.now();
     emprestimo.setDataDevolucaoReal(dataDevolucao);
     
-  
-    double multa = 0;
-    if (dataDevolucao.isAfter(emprestimo.getDataDevolucaoPrevista())) {
-        long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
-            emprestimo.getDataDevolucaoPrevista(), 
-            dataDevolucao
-        );
-        multa = diasAtraso * MULTA_POR_DIA;
-        emprestimo.setDiasSuspensao((int) diasAtraso);
+    
+    double multa = calcularMulta(emprestimo.getIdEmprestimo());
+    
+    if (multa > 0) {
+        emprestimo.setDiasSuspensao((int) (multa / MULTA_POR_DIA));
     }
     
     emprestimoRepository.save(emprestimo);
     
-    
     exemplar.setStatus(StatusExemplar.DISPONIVEL);
     exemplarRepository.save(exemplar);
-  
+    
+
     List<Reserva> reservasPendentes = reservaRepository.findByObraAndStatusOrderByDataReservaAsc(
         exemplar.getObra(), 
         StatusReserva.PENDENTE
@@ -237,17 +232,43 @@ public double registrarDevolucao(int idExemplar) {
     
     if (!reservasPendentes.isEmpty()) {
         Reserva proximaReserva = reservasPendentes.get(0);
-        
-    
         proximaReserva.setStatus(StatusReserva.ATENDIDA);
         reservaRepository.save(proximaReserva);
         
         System.out.println("Reserva #" + proximaReserva.getIdReserva() + 
                            " atendida para o leitor: " + proximaReserva.getLeitor().getNome());
-    } else {
-        System.out.println("ℹNenhuma reserva pendente para esta obra.");
     }
     
     return multa;
 }
+
+@Transactional(readOnly = true)
+public double calcularMulta(int idEmprestimo) {
+    Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
+            .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
+    
+    if (emprestimo.getDataDevolucaoReal() != null) {
+        if (emprestimo.getDataDevolucaoReal().isAfter(emprestimo.getDataDevolucaoPrevista())) {
+            long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
+                emprestimo.getDataDevolucaoPrevista(),
+                emprestimo.getDataDevolucaoReal()
+            );
+            return diasAtraso * MULTA_POR_DIA;
+        }
+        return 0;
+    }
+    
+
+    LocalDate hoje = LocalDate.now();
+    if (hoje.isAfter(emprestimo.getDataDevolucaoPrevista())) {
+        long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
+            emprestimo.getDataDevolucaoPrevista(),
+            hoje
+        );
+        return diasAtraso * MULTA_POR_DIA;
+    }
+    
+    return 0;
+}
+
 }

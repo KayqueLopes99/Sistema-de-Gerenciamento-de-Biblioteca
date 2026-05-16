@@ -15,7 +15,7 @@ public interface ObraRepository extends JpaRepository<Obra, Integer> {
     List<Obra> findByAutorContainingIgnoreCase(String autor);
     List<Obra> findByAnoPublicacao(int ano);
     List<Obra> findByCategoriasNomeContainingIgnoreCase(String categoria);
-
+  
     @Query("SELECT o FROM Obra o " +
            "LEFT JOIN Exemplar ex ON ex.obra.idObra = o.idObra " +
            "LEFT JOIN Emprestimo e ON e.exemplar.idExemplar = ex.idExemplar " +

@@ -1,7 +1,7 @@
 package com.biblioteca.gerenciador.enums;
 public enum StatusReserva {
-   PENDENTE,
-   ATENTIDA,
-   CANCELADA,   
-   EXPIRADA
+    PENDENTE,
+    ATENDIDA,
+    CANCELADA,   
+    EXPIRADA
 }

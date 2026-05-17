@@ -195,80 +195,93 @@ public class EmprestimoService {
         reserva.setLeitor(leitor);
         reserva.setObra(obra);
         reserva.setDataReserva(LocalDate.now());
-        reserva.setStatus(StatusReserva.PENDENTE);
+        reserva.setStatus(StatusReserva.ATENDIDA);
         
         reservaRepository.save(reserva);
     }
 
- @Transactional
-public double registrarDevolucao(int idExemplar) {
-    Exemplar exemplar = exemplarRepository.findById(idExemplar)
-            .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
-    
-    Emprestimo emprestimo = emprestimoRepository
-            .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(idExemplar)
-            .orElseThrow(() -> new RuntimeException("Não há empréstimo ativo para este exemplar"));
-    
-    LocalDate dataDevolucao = LocalDate.now();
-    emprestimo.setDataDevolucaoReal(dataDevolucao);
-    
-    
-    double multa = calcularMulta(emprestimo.getIdEmprestimo());
-    
-    if (multa > 0) {
-        emprestimo.setDiasSuspensao((int) (multa / MULTA_POR_DIA));
-    }
-    
-    emprestimoRepository.save(emprestimo);
-    
-    exemplar.setStatus(StatusExemplar.DISPONIVEL);
-    exemplarRepository.save(exemplar);
-    
-
-    List<Reserva> reservasPendentes = reservaRepository.findByObraAndStatusOrderByDataReservaAsc(
-        exemplar.getObra(), 
-        StatusReserva.PENDENTE
-    );
-    
-    if (!reservasPendentes.isEmpty()) {
-        Reserva proximaReserva = reservasPendentes.get(0);
-        proximaReserva.setStatus(StatusReserva.ATENDIDA);
-        reservaRepository.save(proximaReserva);
+    @Transactional
+    public double registrarDevolucao(int idExemplar) {
+        Exemplar exemplar = exemplarRepository.findById(idExemplar)
+                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
         
-        System.out.println("Reserva #" + proximaReserva.getIdReserva() + 
-                           " atendida para o leitor: " + proximaReserva.getLeitor().getNome());
-    }
-    
-    return multa;
-}
+        Emprestimo emprestimo = emprestimoRepository
+                .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(idExemplar)
+                .orElseThrow(() -> new RuntimeException("Não há empréstimo ativo para este exemplar"));
+        
+        LocalDate dataDevolucao = LocalDate.now();
+        emprestimo.setDataDevolucaoReal(dataDevolucao);
+        
+        
+        double multa = calcularMulta(emprestimo.getIdEmprestimo());
+        
+        if (multa > 0) {
+            emprestimo.setDiasSuspensao((int) (multa / MULTA_POR_DIA));
+        }
+        
+        emprestimoRepository.save(emprestimo);
+        
+        exemplar.setStatus(StatusExemplar.DISPONIVEL);
+        exemplarRepository.save(exemplar);
+        
 
-@Transactional(readOnly = true)
-public double calcularMulta(int idEmprestimo) {
-    Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
-            .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
-    
-    if (emprestimo.getDataDevolucaoReal() != null) {
-        if (emprestimo.getDataDevolucaoReal().isAfter(emprestimo.getDataDevolucaoPrevista())) {
+        List<Reserva> reservasPendentes = reservaRepository.findByObraAndStatusOrderByDataReservaAsc(
+            exemplar.getObra(), 
+            StatusReserva.PENDENTE
+        );
+        
+        if (!reservasPendentes.isEmpty()) {
+            Reserva proximaReserva = reservasPendentes.get(0);
+            proximaReserva.setStatus(StatusReserva.ATENDIDA);
+            reservaRepository.save(proximaReserva);
+            
+            System.out.println("Reserva #" + proximaReserva.getIdReserva() + 
+                            " atendida para o leitor: " + proximaReserva.getLeitor().getNome());
+        }
+        
+        return multa;
+    }
+
+    @Transactional(readOnly = true)
+    public double calcularMulta(int idEmprestimo) {
+        Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
+                .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
+        
+        if (emprestimo.getDataDevolucaoReal() != null) {
+            if (emprestimo.getDataDevolucaoReal().isAfter(emprestimo.getDataDevolucaoPrevista())) {
+                long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
+                    emprestimo.getDataDevolucaoPrevista(),
+                    emprestimo.getDataDevolucaoReal()
+                );
+                return diasAtraso * MULTA_POR_DIA;
+            }
+            return 0;
+        }
+        
+
+        LocalDate hoje = LocalDate.now();
+        if (hoje.isAfter(emprestimo.getDataDevolucaoPrevista())) {
             long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
                 emprestimo.getDataDevolucaoPrevista(),
-                emprestimo.getDataDevolucaoReal()
+                hoje
             );
             return diasAtraso * MULTA_POR_DIA;
         }
+        
         return 0;
     }
-    
 
-    LocalDate hoje = LocalDate.now();
-    if (hoje.isAfter(emprestimo.getDataDevolucaoPrevista())) {
-        long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
-            emprestimo.getDataDevolucaoPrevista(),
-            hoje
-        );
-        return diasAtraso * MULTA_POR_DIA;
-    }
+    @Transactional
+    public void solicitarReserva(int idObra) {
     
-    return 0;
-}
+        String email = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        
+
+        Leitor leitor = leitorRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
+        
+        registrarReserva(leitor.getIdUsuario(), idObra);
+    }
 
 }

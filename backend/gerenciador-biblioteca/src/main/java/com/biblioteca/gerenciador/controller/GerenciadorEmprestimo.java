@@ -116,4 +116,16 @@ public class GerenciadorEmprestimo {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+
+@PreAuthorize("hasRole('LEITOR')")
+@GetMapping("/historico-leitura/{idLeitor}")
+public ResponseEntity<?> visualizarHistoricoLeitura(@PathVariable int idLeitor) {
+    try {
+        List<Emprestimo> historico = emprestimoService.visualizarHistoricoLeitura(idLeitor);
+        return ResponseEntity.ok(historico);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+}
 }

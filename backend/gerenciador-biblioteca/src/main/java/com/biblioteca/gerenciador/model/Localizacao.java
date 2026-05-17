@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.EqualsAndHashCode;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,6 +27,7 @@ public class Localizacao {
     private String descricao;
 
     @OneToMany(mappedBy = "localizacao")
+    @JsonIgnore
     private List<Exemplar> exemplares;
 
 }

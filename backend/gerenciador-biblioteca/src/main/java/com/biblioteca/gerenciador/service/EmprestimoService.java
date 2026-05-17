@@ -284,4 +284,11 @@ public class EmprestimoService {
         registrarReserva(leitor.getIdUsuario(), idObra);
     }
 
+@Transactional(readOnly = true)
+public List<Emprestimo> visualizarHistoricoLeitura(int idLeitor) {
+    Leitor leitor = leitorRepository.findById(idLeitor)
+            .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
+    
+    return emprestimoRepository.findByLeitorAndDataDevolucaoRealIsNotNullOrderByDataDevolucaoRealDesc(leitor);
+}
 }

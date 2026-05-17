@@ -28,9 +28,9 @@ public interface EmprestimoRepository extends JpaRepository<Emprestimo, Integer>
     @Query("SELECT e FROM Emprestimo e WHERE e.dataDevolucaoReal IS NULL AND e.dataDevolucaoPrevista < :dataAtual")
     List<Emprestimo> findEmprestimosVencidos(@Param("dataAtual") LocalDate dataAtual);
     
-
     Optional<Emprestimo> findById(int id);
 
+    List<Emprestimo> findByLeitorAndDataDevolucaoRealIsNotNullOrderByDataDevolucaoRealDesc(Leitor leitor);
    
 
 

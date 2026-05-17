@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import com.biblioteca.gerenciador.enums.StatusExemplar;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @NoArgsConstructor
@@ -31,6 +32,7 @@ public class Exemplar {
 
     @ManyToOne
     @JoinColumn(name = "id_localizacao")
+    @JsonIgnore
     private Localizacao localizacao;
 
     @Enumerated(EnumType.STRING)

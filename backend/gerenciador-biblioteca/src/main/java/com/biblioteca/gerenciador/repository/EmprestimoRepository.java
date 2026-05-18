@@ -31,6 +31,8 @@ public interface EmprestimoRepository extends JpaRepository<Emprestimo, Integer>
     Optional<Emprestimo> findById(int id);
 
     List<Emprestimo> findByLeitorAndDataDevolucaoRealIsNotNullOrderByDataDevolucaoRealDesc(Leitor leitor);
+
+    boolean existsByLeitorIdUsuarioAndExemplarObraIdObra(int idUsuario, int idObra);
    
 
 

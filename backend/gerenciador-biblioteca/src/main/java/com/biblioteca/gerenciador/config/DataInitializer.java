@@ -22,7 +22,7 @@ public class DataInitializer implements CommandLineRunner {
             
             Bibliotecario admin = new Bibliotecario();
             admin.setNome("Administrador do Sistema");
-            admin.setEmail("admin@biblioteca.com");
+            admin.setEmail("admin@ufersa.edu.br");
             admin.setSenha(passwordEncoder.encode("Admin123"));
             admin.setRegistroFuncional("ADMIN001");
             admin.setTipoUsuario(TipoUsuario.BIBLIOTECARIO);
@@ -30,7 +30,7 @@ public class DataInitializer implements CommandLineRunner {
             bibliotecarioRepository.save(admin);
     
             System.out.println("BIBLIOTECÁRIO ADMIN CRIADO COM SUCESSO!");
-            System.out.println("   Email: admin@biblioteca.com");
+            System.out.println("   Email: admin@ufersa.edu.br");
             System.out.println("   Senha: Admin123");
           
         } else {

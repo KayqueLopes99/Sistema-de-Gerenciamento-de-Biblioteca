@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -31,43 +29,42 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public LoginResponseDTO login(LoginRequestDTO dto) {
-       
+
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Email não encontrado"));
 
         if (!passwordEncoder.matches(dto.getSenha(), usuario.getSenha())) {
             throw new RuntimeException("Senha inválida");
         }
-        
+
         String token = jwtUtil.generateToken(
-            usuario.getEmail(), 
-            usuario.getTipoUsuario().name(),
-            usuario.getNome()
-        );
-        
+                usuario.getEmail(),
+                usuario.getTipoUsuario().name(),
+                usuario.getNome());
+
         return new LoginResponseDTO(
-            token,
-            usuario.getTipoUsuario().name(),
-            usuario.getNome(),
-            usuario.getEmail()
-        );
+                token,
+                usuario.getTipoUsuario().name(),
+                usuario.getNome(),
+                usuario.getEmail());
     }
 
     @Transactional
     public void solicitarAutoCadastro(LeitorRequestDTO dto) {
 
+        validarDominioEmail(dto.getEmail());
+
         if (!CpfValidator.isValid(dto.getCpf())) {
             throw new RuntimeException("O CPF informado é inválido");
         }
 
-        // Validações (dados já vêm limpos do DTO)
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new RuntimeException("Email já cadastrado");
         }
         if (leitorRepository.findByCpf(dto.getCpf()).isPresent()) {
             throw new RuntimeException("CPF já cadastrado");
         }
-        
+
         Leitor leitor = criarLeitorFromDTO(dto);
         leitor.setStatusLeitor(StatusLeitor.PENDENTE_APROVACAO);
         leitorRepository.save(leitor);
@@ -76,6 +73,8 @@ public class UsuarioService {
     @Transactional
     public void cadastrarLeitor(LeitorRequestDTO dto) {
 
+        validarDominioEmail(dto.getEmail());
+
         if (!CpfValidator.isValid(dto.getCpf())) {
             throw new RuntimeException("O CPF informado é inválido");
         }
@@ -86,7 +85,7 @@ public class UsuarioService {
         if (leitorRepository.findByCpf(dto.getCpf()).isPresent()) {
             throw new RuntimeException("CPF já cadastrado");
         }
-        
+
         Leitor leitor = criarLeitorFromDTO(dto);
         leitor.setStatusLeitor(StatusLeitor.ATIVO);
         leitorRepository.save(leitor);
@@ -98,19 +97,19 @@ public class UsuarioService {
         if (!CpfValidator.isValid(dto.getCpf())) {
             throw new RuntimeException("Não é possível salvar um CPF inválido");
         }
-        
+
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         leitor.setNome(dto.getNome());
         leitor.setEmail(dto.getEmail());
         leitor.setCpf(dto.getCpf());
         leitor.setMatricula(dto.getMatricula());
-        
+
         if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
             leitor.setSenha(passwordEncoder.encode(dto.getSenha()));
         }
-        
+
         leitorRepository.save(leitor);
     }
 
@@ -118,7 +117,7 @@ public class UsuarioService {
     public void bloquearLeitor(int idLeitor) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         leitor.setStatusLeitor(StatusLeitor.SUSPENSO);
         leitor.setDataFimSuspensao(LocalDate.now().plusDays(30));
         leitorRepository.save(leitor);
@@ -128,7 +127,7 @@ public class UsuarioService {
     public void desbloquearLeitor(int idLeitor) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         leitor.setStatusLeitor(StatusLeitor.ATIVO);
         leitor.setDataFimSuspensao(null);
         leitorRepository.save(leitor);
@@ -138,15 +137,14 @@ public class UsuarioService {
     public void aprovarLeitor(int idLeitor) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         if (leitor.getStatusLeitor() != StatusLeitor.PENDENTE_APROVACAO) {
             throw new RuntimeException("Leitor não está pendente de aprovação");
         }
-        
+
         leitor.setStatusLeitor(StatusLeitor.ATIVO);
         leitorRepository.save(leitor);
     }
-
 
     private Leitor criarLeitorFromDTO(LeitorRequestDTO dto) {
         Leitor leitor = new Leitor();
@@ -158,5 +156,16 @@ public class UsuarioService {
         leitor.setDataCadastro(LocalDate.now());
         leitor.setTipoUsuario(TipoUsuario.LEITOR);
         return leitor;
+    }
+
+    private void validarDominioEmail(String email) {
+
+        if (!email.endsWith("@alunos.ufersa.edu.br") &&
+                !email.endsWith("@ufersa.edu.br") &&
+                !email.endsWith("@gmail.com")) {
+
+            throw new RuntimeException(
+                    "Acesso negado: O cadastro é permitido apenas para e-mails institucionais da UFERSA ou contas Gmail autorizadas.");
+        }
     }
 }

@@ -30,32 +30,31 @@ public class EmprestimoService {
     private final ReservaRepository reservaRepository;
     private final ObraRepository obraRepository;
 
-    private static final int DIAS_EMPReSTIMO = 14; 
-    private static final int MAX_RENOVACOES = 2;  
-    private static final int DIAS_RENOVACAO = 7;   
+    private static final int DIAS_EMPReSTIMO = 14;
+    private static final int MAX_RENOVACOES = 2;
+    private static final int DIAS_RENOVACAO = 7;
     private static final int MAX_EMPRESTIMOS_ATIVOS = 5;
-    private static final int MAX_RESERVAS_ATIVAS = 3;   // Máximo 3 reservas por leitor
-    private static final double MULTA_POR_DIA = 1.0;    // R$ 1,00 por dia de atraso
+    private static final int MAX_RESERVAS_ATIVAS = 3;
+    private static final double MULTA_POR_DIA = 1.0;
 
     @Transactional(readOnly = true)
     public List<Emprestimo> consultarHistoricoLeitor(int idLeitor) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         return emprestimoRepository.findByLeitorOrderByDataEmprestimoDesc(leitor);
     }
-
 
     @Transactional(readOnly = true)
     public List<Emprestimo> consultarMeusEmprestimos(int idLeitor) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         if (leitor.getStatusLeitor() == StatusLeitor.SUSPENSO) {
 
             System.out.println("Aviso: Leitor está suspenso até " + leitor.getDataFimSuspensao());
         }
-        
+
         return emprestimoRepository.findByLeitorAndDataDevolucaoRealIsNullOrderByDataDevolucaoPrevistaAsc(leitor);
     }
 
@@ -63,41 +62,35 @@ public class EmprestimoService {
     public void solicitarRenovacao(RenovacaoRequestDTO dto) {
         Emprestimo emprestimo = emprestimoRepository.findById(dto.getIdEmprestimo())
                 .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
-        
+
         // Verifica se o empréstimo pertence ao leitor (segurança)
         if (emprestimo.getLeitor().getIdUsuario() != dto.getIdLeitor()) {
             throw new RuntimeException("Este empréstimo não pertence ao leitor informado");
         }
-        
-     
+
         if (emprestimo.getDataDevolucaoReal() != null) {
             throw new RuntimeException("Este empréstimo já foi devolvido");
         }
-        
-    
+
         Leitor leitor = emprestimo.getLeitor();
         if (leitor.getStatusLeitor() == StatusLeitor.SUSPENSO) {
             throw new RuntimeException("Leitor está suspenso. Não é possível renovar.");
         }
-        
-       
+
         if (emprestimo.getQuantidadeRenovacoes() >= MAX_RENOVACOES) {
             throw new RuntimeException("Limite de renovações atingido (máximo " + MAX_RENOVACOES + " renovações)");
         }
-        
-   
+
         boolean temReservaAtiva = reservaRepository.existsByObraAndStatus(
-            emprestimo.getExemplar().getObra(), 
-            com.biblioteca.gerenciador.enums.StatusReserva.PENDENTE
-        );
+                emprestimo.getExemplar().getObra(),
+                com.biblioteca.gerenciador.enums.StatusReserva.PENDENTE);
         if (temReservaAtiva) {
             throw new RuntimeException("Não é possível renovar. O livro está reservado por outro leitor.");
         }
-        
-   
+
         emprestimo.setQuantidadeRenovacoes(emprestimo.getQuantidadeRenovacoes() + 1);
         emprestimo.setDataDevolucaoPrevista(emprestimo.getDataDevolucaoPrevista().plusDays(DIAS_RENOVACAO));
-        
+
         emprestimoRepository.save(emprestimo);
     }
 
@@ -105,39 +98,35 @@ public class EmprestimoService {
     public void realizarEmprestimo(int idLeitor, int idExemplar) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         Exemplar exemplar = exemplarRepository.findById(idExemplar)
                 .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
-        
-   
+
         if (leitor.getStatusLeitor() != StatusLeitor.ATIVO) {
             throw new RuntimeException("Leitor não está ativo para realizar empréstimos");
         }
 
-            long emprestimosAtivos = emprestimoRepository.countByLeitorAndDataDevolucaoRealIsNull(leitor);
-            if (emprestimosAtivos >= MAX_EMPRESTIMOS_ATIVOS) {
-                throw new RuntimeException("Limite de empréstimos ativos atingido (máximo " + MAX_EMPRESTIMOS_ATIVOS + " livros)");
-            }
-                    
-  
+        long emprestimosAtivos = emprestimoRepository.countByLeitorAndDataDevolucaoRealIsNull(leitor);
+        if (emprestimosAtivos >= MAX_EMPRESTIMOS_ATIVOS) {
+            throw new RuntimeException(
+                    "Limite de empréstimos ativos atingido (máximo " + MAX_EMPRESTIMOS_ATIVOS + " livros)");
+        }
+
         if (leitor.getDataFimSuspensao() != null && leitor.getDataFimSuspensao().isAfter(LocalDate.now())) {
             throw new RuntimeException("Leitor está suspenso até " + leitor.getDataFimSuspensao());
         }
-        
-     
+
         if (exemplar.getStatus() != StatusExemplar.DISPONIVEL) {
             throw new RuntimeException("Exemplar não está disponível para empréstimo");
         }
-        
-  
+
         boolean jaTemEmprestimo = emprestimoRepository
-            .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(idExemplar)
-            .isPresent();
+                .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(idExemplar)
+                .isPresent();
         if (jaTemEmprestimo) {
             throw new RuntimeException("Leitor já possui este livro emprestado");
         }
-        
-    
+
         Emprestimo emprestimo = new Emprestimo();
         emprestimo.setLeitor(leitor);
         emprestimo.setExemplar(exemplar);
@@ -145,58 +134,53 @@ public class EmprestimoService {
         emprestimo.setDataDevolucaoPrevista(LocalDate.now().plusDays(DIAS_EMPReSTIMO));
         emprestimo.setQuantidadeRenovacoes(0);
         emprestimo.setDiasSuspensao(0);
-        
-       
+
         exemplar.setStatus(StatusExemplar.EMPRESTADO);
         exemplarRepository.save(exemplar);
-        
+
         emprestimoRepository.save(emprestimo);
     }
 
-    
     @Transactional
     public void registrarReserva(int idLeitor, int idObra) {
         Leitor leitor = leitorRepository.findById(idLeitor)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         Obra obra = obraRepository.findById(idObra)
                 .orElseThrow(() -> new RuntimeException("Obra não encontrada"));
-        
-        
+
         if (leitor.getStatusLeitor() != StatusLeitor.ATIVO) {
             throw new RuntimeException("Leitor não está ativo para realizar reservas");
         }
-        
 
         if (leitor.getDataFimSuspensao() != null && leitor.getDataFimSuspensao().isAfter(LocalDate.now())) {
             throw new RuntimeException("Leitor está suspenso até " + leitor.getDataFimSuspensao());
         }
-        
-        
+
         long reservasAtivas = reservaRepository.countByLeitorAndStatus(leitor, StatusReserva.PENDENTE);
         if (reservasAtivas >= MAX_RESERVAS_ATIVAS) {
-            throw new RuntimeException("Limite de reservas ativas atingido (máximo " + MAX_RESERVAS_ATIVAS + " reservas)");
+            throw new RuntimeException(
+                    "Limite de reservas ativas atingido (máximo " + MAX_RESERVAS_ATIVAS + " reservas)");
         }
-        
-    
-        boolean jaTemReserva = reservaRepository.existsByObraAndStatusAndLeitorNot(obra, StatusReserva.PENDENTE, leitor);
+
+        boolean jaTemReserva = reservaRepository.existsByObraAndStatusAndLeitorNot(obra, StatusReserva.PENDENTE,
+                leitor);
         if (jaTemReserva) {
             throw new RuntimeException("Leitor já possui reserva ativa para esta obra");
         }
-        
 
         boolean temExemplarDisponivel = exemplarRepository.existsByObraAndStatus(obra, StatusExemplar.DISPONIVEL);
         if (temExemplarDisponivel) {
-            throw new RuntimeException("Não é possível reservar. A obra possui exemplares disponíveis para empréstimo.");
+            throw new RuntimeException(
+                    "Não é possível reservar. A obra possui exemplares disponíveis para empréstimo.");
         }
-        
 
         Reserva reserva = new Reserva();
         reserva.setLeitor(leitor);
         reserva.setObra(obra);
         reserva.setDataReserva(LocalDate.now());
         reserva.setStatus(StatusReserva.ATENDIDA);
-        
+
         reservaRepository.save(reserva);
     }
 
@@ -204,41 +188,38 @@ public class EmprestimoService {
     public double registrarDevolucao(int idExemplar) {
         Exemplar exemplar = exemplarRepository.findById(idExemplar)
                 .orElseThrow(() -> new RuntimeException("Exemplar não encontrado"));
-        
+
         Emprestimo emprestimo = emprestimoRepository
                 .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(idExemplar)
                 .orElseThrow(() -> new RuntimeException("Não há empréstimo ativo para este exemplar"));
-        
+
         LocalDate dataDevolucao = LocalDate.now();
         emprestimo.setDataDevolucaoReal(dataDevolucao);
-        
-        
+
         double multa = calcularMulta(emprestimo.getIdEmprestimo());
-        
+
         if (multa > 0) {
             emprestimo.setDiasSuspensao((int) (multa / MULTA_POR_DIA));
         }
-        
+
         emprestimoRepository.save(emprestimo);
-        
+
         exemplar.setStatus(StatusExemplar.DISPONIVEL);
         exemplarRepository.save(exemplar);
-        
 
         List<Reserva> reservasPendentes = reservaRepository.findByObraAndStatusOrderByDataReservaAsc(
-            exemplar.getObra(), 
-            StatusReserva.PENDENTE
-        );
-        
+                exemplar.getObra(),
+                StatusReserva.PENDENTE);
+
         if (!reservasPendentes.isEmpty()) {
             Reserva proximaReserva = reservasPendentes.get(0);
             proximaReserva.setStatus(StatusReserva.ATENDIDA);
             reservaRepository.save(proximaReserva);
-            
-            System.out.println("Reserva #" + proximaReserva.getIdReserva() + 
-                            " atendida para o leitor: " + proximaReserva.getLeitor().getNome());
+
+            System.out.println("Reserva #" + proximaReserva.getIdReserva() +
+                    " atendida para o leitor: " + proximaReserva.getLeitor().getNome());
         }
-        
+
         return multa;
     }
 
@@ -246,49 +227,82 @@ public class EmprestimoService {
     public double calcularMulta(int idEmprestimo) {
         Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
                 .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
-        
+
         if (emprestimo.getDataDevolucaoReal() != null) {
             if (emprestimo.getDataDevolucaoReal().isAfter(emprestimo.getDataDevolucaoPrevista())) {
                 long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
-                    emprestimo.getDataDevolucaoPrevista(),
-                    emprestimo.getDataDevolucaoReal()
-                );
+                        emprestimo.getDataDevolucaoPrevista(),
+                        emprestimo.getDataDevolucaoReal());
                 return diasAtraso * MULTA_POR_DIA;
             }
             return 0;
         }
-        
 
         LocalDate hoje = LocalDate.now();
         if (hoje.isAfter(emprestimo.getDataDevolucaoPrevista())) {
             long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(
-                emprestimo.getDataDevolucaoPrevista(),
-                hoje
-            );
+                    emprestimo.getDataDevolucaoPrevista(),
+                    hoje);
             return diasAtraso * MULTA_POR_DIA;
         }
-        
+
         return 0;
     }
 
     @Transactional
     public void solicitarReserva(int idObra) {
-    
+
         String email = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication().getName();
-        
 
         Leitor leitor = leitorRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-        
+
         registrarReserva(leitor.getIdUsuario(), idObra);
     }
 
-@Transactional(readOnly = true)
-public List<Emprestimo> visualizarHistoricoLeitura(int idLeitor) {
-    Leitor leitor = leitorRepository.findById(idLeitor)
-            .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
-    
-    return emprestimoRepository.findByLeitorAndDataDevolucaoRealIsNotNullOrderByDataDevolucaoRealDesc(leitor);
-}
+    @Transactional(readOnly = true)
+    public List<Emprestimo> visualizarHistoricoLeitura(int idLeitor) {
+        Leitor leitor = leitorRepository.findById(idLeitor)
+                .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
+
+        return emprestimoRepository.findByLeitorAndDataDevolucaoRealIsNotNullOrderByDataDevolucaoRealDesc(leitor);
+    }
+
+    @Transactional
+    public void renovarEmprestimo(int idEmprestimo) {
+        // 1. Busca o empréstimo existente
+        Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
+                .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
+
+        // 2. Valida se o livro já não foi devolvido
+        if (emprestimo.getDataDevolucaoReal() != null) {
+            throw new RuntimeException("Este empréstimo já foi devolvido");
+        }
+
+        // 3. Valida se o leitor dono do empréstimo não está suspenso
+        Leitor leitor = emprestimo.getLeitor();
+        if (leitor.getStatusLeitor() == StatusLeitor.SUSPENSO) {
+            throw new RuntimeException("Leitor está suspenso. Não é possível renovar.");
+        }
+
+        // 4. Valida o limite de renovações permitidas pelo sistema
+        if (emprestimo.getQuantidadeRenovacoes() >= MAX_RENOVACOES) {
+            throw new RuntimeException("Limite de renovações atingido (máximo " + MAX_RENOVACOES + " renovações)");
+        }
+
+        // 5. Valida se não existe nenhuma reserva pendente para esta obra
+        boolean temReservaAtiva = reservaRepository.existsByObraAndStatus(
+                emprestimo.getExemplar().getObra(),
+                com.biblioteca.gerenciador.enums.StatusReserva.PENDENTE);
+        if (temReservaAtiva) {
+            throw new RuntimeException("Não é possível renovar. O livro está reservado por outro leitor.");
+        }
+
+        // 6. Aplica a renovação estendendo o prazo padrão
+        emprestimo.setQuantidadeRenovacoes(emprestimo.getQuantidadeRenovacoes() + 1);
+        emprestimo.setDataDevolucaoPrevista(emprestimo.getDataDevolucaoPrevista().plusDays(DIAS_RENOVACAO));
+
+        emprestimoRepository.save(emprestimo);
+    }
 }

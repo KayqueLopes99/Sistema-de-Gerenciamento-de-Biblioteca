@@ -13,10 +13,43 @@ export function Register() {
     password: "",
     confirmPassword: "",
   });
+  
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/login");
+    setErro("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setErro("As senhas não coincidem!");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8080/api/usuarios/auto-cadastro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: formData.name,
+          email: formData.email,
+          senha: formData.password
+        }),
+      });
+
+      const dataText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(dataText || "Erro ao realizar o cadastro.");
+      }
+
+      setSucesso(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (err: any) {
+      setErro(err.message || "Não foi possível conectar ao servidor.");
+    }
   };
 
   return (
@@ -26,13 +59,16 @@ export function Register() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4">
             <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <h1 className="mb-2">Criar Conta</h1>
+          <h1 className="mb-2 text-2xl font-bold text-foreground">Criar Conta</h1>
           <p className="text-muted-foreground">
             Junte-se à nossa comunidade de leitores
           </p>
         </div>
 
         <Card>
+          {sucesso && <p className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm text-center">Cadastro realizado! Aguarde aprovação.</p>}
+          {erro && <p className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm text-center">{erro}</p>}
+
           <form onSubmit={handleRegister} className="space-y-4">
             <Input
               label="Nome completo"
@@ -72,7 +108,7 @@ export function Register() {
 
             <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary" required />
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 Concordo com os{" "}
                 <a href="#" className="text-primary hover:text-primary/80">
                   Termos de Uso

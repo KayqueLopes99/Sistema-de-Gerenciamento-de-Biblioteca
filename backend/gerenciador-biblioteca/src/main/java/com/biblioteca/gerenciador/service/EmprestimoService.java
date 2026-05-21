@@ -271,27 +271,25 @@ public class EmprestimoService {
 
     @Transactional
     public void renovarEmprestimo(int idEmprestimo) {
-        // 1. Busca o empréstimo existente
+        
         Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
                 .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
 
-        // 2. Valida se o livro já não foi devolvido
+        
         if (emprestimo.getDataDevolucaoReal() != null) {
             throw new RuntimeException("Este empréstimo já foi devolvido");
         }
 
-        // 3. Valida se o leitor dono do empréstimo não está suspenso
+        
         Leitor leitor = emprestimo.getLeitor();
         if (leitor.getStatusLeitor() == StatusLeitor.SUSPENSO) {
             throw new RuntimeException("Leitor está suspenso. Não é possível renovar.");
         }
 
-        // 4. Valida o limite de renovações permitidas pelo sistema
         if (emprestimo.getQuantidadeRenovacoes() >= MAX_RENOVACOES) {
             throw new RuntimeException("Limite de renovações atingido (máximo " + MAX_RENOVACOES + " renovações)");
         }
 
-        // 5. Valida se não existe nenhuma reserva pendente para esta obra
         boolean temReservaAtiva = reservaRepository.existsByObraAndStatus(
                 emprestimo.getExemplar().getObra(),
                 com.biblioteca.gerenciador.enums.StatusReserva.PENDENTE);
@@ -299,7 +297,6 @@ public class EmprestimoService {
             throw new RuntimeException("Não é possível renovar. O livro está reservado por outro leitor.");
         }
 
-        // 6. Aplica a renovação estendendo o prazo padrão
         emprestimo.setQuantidadeRenovacoes(emprestimo.getQuantidadeRenovacoes() + 1);
         emprestimo.setDataDevolucaoPrevista(emprestimo.getDataDevolucaoPrevista().plusDays(DIAS_RENOVACAO));
 

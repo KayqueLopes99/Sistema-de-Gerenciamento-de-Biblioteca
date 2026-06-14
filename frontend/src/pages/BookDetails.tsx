@@ -12,9 +12,18 @@ export function BookDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const book = books.find((b) => b.id === Number(id));
-  const { addLoan, toggleFavorite, isFavorite, isBookLoaned } = useLibrary();
   const [userRating, setUserRating] = useState(0);
+  const [comment, setComment] = useState("");
   const [showReservation, setShowReservation] = useState(false);
+
+  const {
+    addLoan,
+    toggleFavorite,
+    isFavorite,
+    isBookLoaned,
+    addReview,
+    getBookReviews
+  } = useLibrary();
 
   const handleBorrow = () => {
     if (book) {
@@ -38,6 +47,30 @@ export function BookDetails() {
   };
 
   const bookIsLoaned = book ? isBookLoaned(book.id) : false;
+  const reviews = book
+    ? getBookReviews(book.id)
+    : [];
+    
+  const handleReviewSubmit = () => {
+    if (!book) return;
+    
+    if (!bookIsLoaned) {
+      toast.error(
+        "Você precisa ter emprestado este livro para avaliá-lo."
+      );
+      return;
+    }
+    
+    addReview(
+      book.id,
+      userRating,
+      comment
+    );
+    
+    toast.success("Avaliação enviada!");
+      setUserRating(0);
+      setComment("");
+    };
 
   if (!book) {
     return (
@@ -260,10 +293,63 @@ export function BookDetails() {
                 )}
               </div>
               <textarea
-                className="w-full px-4 py-2.5 rounded-lg bg-input-background border border-border focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all min-h-[100px] mb-4"
-                placeholder="Escreva sua avaliação sobre este livro..."
+               value={comment}
+               onChange={(e) =>
+                 setComment(e.target.value)
+               }
               />
-              <Button disabled={userRating === 0}>Enviar Avaliação</Button>
+              <Button 
+                disabled={userRating === 0}
+                onClick={handleReviewSubmit}
+                >Enviar Avaliação</Button>
+
+              <div className="mt-8">
+                <h3 className="mb-4">
+                  Avaliações dos Leitores
+                </h3>
+
+                {reviews.length === 0 ? (
+                  <p className="text-muted-foreground">
+                    Nenhuma avaliação ainda.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="border border-border rounded-lg p-4"
+                      >
+                        <div className="flex justify-between mb-2">
+                          <strong>
+                            {review.userName}
+                          </strong>
+
+                          <div className="flex">
+                            {[1,2,3,4,5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`w-4 h-4 ${
+                                  star <= review.rating
+                                    ? "fill-secondary text-secondary"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <p>{review.comment}</p>
+
+                        <small className="text-muted-foreground">
+                          {new Date(
+                            review.createdAt
+                          ).toLocaleDateString("pt-BR")}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </Card>
           </div>
         </div>

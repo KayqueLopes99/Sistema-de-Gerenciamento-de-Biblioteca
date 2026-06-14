@@ -32,3 +32,12 @@ export interface Loan {
   returnDate?: string;
   dueDate: string;
 }
+
+export interface Review {
+  id: number;
+  bookId: number;
+  rating: number;
+  comment: string;
+  userName: string;
+  createdAt: string;
+}

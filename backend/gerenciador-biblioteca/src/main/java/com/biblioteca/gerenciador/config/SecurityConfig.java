@@ -32,6 +32,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/usuarios/auto-cadastro").permitAll()
                 .requestMatchers("/api/acervo/buscar").permitAll()  
                 .requestMatchers(HttpMethod.GET, "/api/avaliacoes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/acervo/obras/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/acervo/localizacoes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/acervo/exemplares").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/favoritos/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/favoritos/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/favoritos/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/acervo/recomendados").permitAll()
                 
                 
                 .anyRequest().authenticated()

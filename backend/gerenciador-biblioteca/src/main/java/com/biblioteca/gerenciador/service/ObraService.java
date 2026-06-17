@@ -1,8 +1,10 @@
 package com.biblioteca.gerenciador.service;
 
 import com.biblioteca.gerenciador.dto.ObraRequestDTO;
+import com.biblioteca.gerenciador.model.Avaliacao;
 import com.biblioteca.gerenciador.model.Categoria;
 import com.biblioteca.gerenciador.model.Obra;
+import com.biblioteca.gerenciador.repository.AvaliacaoRepository;
 import com.biblioteca.gerenciador.repository.CategoriaRepository;
 import lombok.RequiredArgsConstructor;
 import com.biblioteca.gerenciador.repository.ObraRepository;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -18,6 +21,7 @@ public class ObraService {
 
     private final ObraRepository obraRepository;
     private final CategoriaRepository categoriaRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
 
     @Transactional
     public void cadastrarObra(ObraRequestDTO dto) {
@@ -116,4 +120,28 @@ public class ObraService {
         obraRepository.deleteById(idObra);
     }
 
+    public Obra buscarPorId(int idObra) {
+        return obraRepository.findById(idObra)
+                .orElseThrow(() -> new RuntimeException("Obra não encontrada com o ID: " + idObra));
+        }
+
+        public List<Obra> buscarRecomendados() {
+        // Pega obras com média de avaliação >= 4.5
+        List<Obra> todas = obraRepository.findAll();
+        // Filtra e ordena por nota (simulado – ideal seria uma query com join e AVG)
+        // Para não complicar, pegamos as 6 mais recentes com maior nota (ajustável)
+        return todas.stream()
+                .sorted((o1, o2) -> Double.compare(
+                    getMediaAvaliacoes(o2.getIdObra()),
+                    getMediaAvaliacoes(o1.getIdObra())
+                ))
+                .limit(6)
+                .collect(Collectors.toList());
+    }
+
+    private double getMediaAvaliacoes(int idObra) {
+        List<Avaliacao> avaliacoes = avaliacaoRepository.findByObraIdObra(idObra);
+        if (avaliacoes.isEmpty()) return 0;
+        return avaliacoes.stream().mapToInt(Avaliacao::getNota).average().orElse(0);
+    }
 }

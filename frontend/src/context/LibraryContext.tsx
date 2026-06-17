@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import type { Loan, Review } from "../types";
+import type { Loan } from "../types";
 
 interface LibraryContextType {
   loans: Loan[];
@@ -10,15 +10,6 @@ interface LibraryContextType {
   toggleFavorite: (bookId: number) => void;
   isFavorite: (bookId: number) => boolean;
   isBookLoaned: (bookId: number) => boolean;
-  
-  reviews: Review[];
-  addReview: (
-    bookId: number,
-    rating: number,
-    comment: string
-) => void;
-
-getBookReviews: (bookId: number) => Review[];
 }
 
 const LibraryContext = createContext<LibraryContextType | null>(null);
@@ -26,7 +17,6 @@ const LibraryContext = createContext<LibraryContextType | null>(null);
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [favorites, setFavorites] = useState<number[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
 
   const addLoan = (bookId: number, bookTitle: string) => {
     const due = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -52,37 +42,14 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       ? prev.filter(id => id !== bookId) : [...prev, bookId]);
   };
 
-  const addReview = (
-    bookId: number,
-    rating: number,
-    comment: string
-  ) => {
-  
-    setReviews(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        bookId,
-        rating,
-        comment,
-        userName: "Usuário Atual",
-        createdAt: new Date().toISOString(),
-      }
-    ]);
-  };
-
   return (
-    <LibraryContext.Provider 
-      value={{
-        loans, favorites, reviews, addLoan, renewLoan, returnBook, 
-        toggleFavorite, addReview, 
-
-        getBookReviews: (bookId) => 
-          reviews.filter(r=>r.bookId===bookId),
-        isFavorite: (id) => favorites.includes(id),
-        isBookLoaned:(id) => loans.some(l=>l.bookId===id && !l.returnDate),
-      }}
-    >{children}
+    <LibraryContext.Provider value={{
+      loans, favorites, addLoan, renewLoan, returnBook,
+      toggleFavorite,
+      isFavorite: (id) => favorites.includes(id),
+      isBookLoaned: (id) => loans.some(l => l.bookId === id && !l.returnDate),
+    }}>
+      {children}
     </LibraryContext.Provider>
   );
 }

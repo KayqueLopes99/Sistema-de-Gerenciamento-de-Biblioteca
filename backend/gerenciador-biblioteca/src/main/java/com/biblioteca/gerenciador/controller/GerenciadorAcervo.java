@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import com.biblioteca.gerenciador.model.Localizacao;
+import com.biblioteca.gerenciador.model.Exemplar;
 
 @RestController
 @RequestMapping("/api/acervo")
@@ -104,5 +106,29 @@ public class GerenciadorAcervo {
     @GetMapping("/obras/{idObra}/disponibilidade")
     public ResponseEntity<DisponibilidadeDTO> verificarDisponibilidade(@PathVariable int idObra) {
         return ResponseEntity.ok(exemplarService.consultarDisponibilidade(idObra));
+    }
+
+    @GetMapping("/localizacoes")
+    public ResponseEntity<List<Localizacao>> listarLocalizacoes() {
+        return ResponseEntity.ok(localizacaoService.listarTodas());
+    }
+
+    @GetMapping("/exemplares")
+    public ResponseEntity<List<Exemplar>> listarExemplares(@RequestParam(required = false) Integer idObra) {
+        if (idObra != null) {
+            return ResponseEntity.ok(exemplarService.listarPorObra(idObra));
+        }
+        return ResponseEntity.ok(exemplarService.listarTodos());
+    }
+
+    @GetMapping("/obras/{id}")
+    public ResponseEntity<Obra> obterObra(@PathVariable int id) {
+        Obra obra = obraService.buscarPorId(id);
+        return ResponseEntity.ok(obra);
+    }
+
+    @GetMapping("/recomendados")
+    public ResponseEntity<List<Obra>> getRecomendados() {
+        return ResponseEntity.ok(obraService.buscarRecomendados());
     }
 }

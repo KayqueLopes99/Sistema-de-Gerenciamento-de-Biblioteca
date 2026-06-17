@@ -302,4 +302,15 @@ public class EmprestimoService {
 
         emprestimoRepository.save(emprestimo);
     }
+
+    // @Transactional(readOnly = true)
+    // public List<Emprestimo> listarEmprestimosAtivos() {
+    //     return emprestimoRepository.findEmprestimosVencidos(LocalDate.now()); // pode ser expandido
+    // }
+
+    @Transactional(readOnly = true)
+    public List<Emprestimo> listarEmprestimosAtivos() {
+        // Retorna todos os empréstimos não devolvidos (dataDevolucaoReal nula)
+        return emprestimoRepository.findByDataDevolucaoRealIsNull();
+    }
 }

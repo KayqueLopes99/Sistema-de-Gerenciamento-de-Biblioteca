@@ -131,4 +131,21 @@ public class GerenciadorEmprestimo {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    // @GetMapping("/ativos")
+    // @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    // public ResponseEntity<List<Emprestimo>> listarEmprestimosAtivos() {
+    //     return ResponseEntity.ok(emprestimoService.listarEmprestimosAtivos());
+    // }
+
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    @GetMapping("/ativos")
+    public ResponseEntity<?> listarEmprestimosAtivos() {
+        try {
+            List<Emprestimo> emprestimos = emprestimoService.listarEmprestimosAtivos();
+            return ResponseEntity.ok(emprestimos);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 }

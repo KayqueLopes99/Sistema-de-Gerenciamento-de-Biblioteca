@@ -1,9 +1,11 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { BookOpen, Home, Library, User, Settings, LogOut, Map } from "lucide-react";
 import { Toaster } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 export function Layout() {
   const location = useLocation();
+  const { isBibliotecario } = useAuth();
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -76,19 +78,22 @@ export function Layout() {
                 <span>Meu Perfil</span>
               </Link>
             </li>
-            <li>
-              <Link
-                to="/admin"
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive("/admin")
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "hover:bg-sidebar-accent/50"
-                }`}
-              >
-                <Settings className="w-5 h-5" />
-                <span>Administração</span>
-              </Link>
-            </li>
+            {/* Administração – visível apenas para bibliotecários */}
+            {isBibliotecario && (
+              <li>
+                <Link
+                  to="/admin"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive("/admin")
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "hover:bg-sidebar-accent/50"
+                  }`}
+                >
+                  <Settings className="w-5 h-5" />
+                  <span>Administração</span>
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
 

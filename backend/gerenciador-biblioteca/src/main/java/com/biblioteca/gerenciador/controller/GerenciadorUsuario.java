@@ -3,12 +3,15 @@ package com.biblioteca.gerenciador.controller;
 import com.biblioteca.gerenciador.dto.LeitorRequestDTO;
 import com.biblioteca.gerenciador.dto.LoginRequestDTO;
 import com.biblioteca.gerenciador.dto.LoginResponseDTO;
+import com.biblioteca.gerenciador.model.Leitor;
 import com.biblioteca.gerenciador.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -82,5 +85,11 @@ public class GerenciadorUsuario {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/leitores")
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    public ResponseEntity<List<Leitor>> listarLeitores() {
+        return ResponseEntity.ok(usuarioService.listarTodosLeitores());
     }
 }

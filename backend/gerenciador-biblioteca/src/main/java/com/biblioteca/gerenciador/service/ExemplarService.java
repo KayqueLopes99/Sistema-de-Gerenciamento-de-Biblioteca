@@ -113,4 +113,8 @@ public class ExemplarService {
 
         return new DisponibilidadeDTO(estaDisponivel, localizacoes);
     }
+
+    public List<Exemplar> listarPorObra(int idObra) {
+        return exemplarRepository.findByObra_IdObra(idObra);
+    }
 }

@@ -3,52 +3,63 @@ import { Link, useNavigate } from "react-router";
 import { Card } from "../components/Card";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
+import { autoCadastro } from "../services/api";
 import { BookOpen } from "lucide-react";
 
 export function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
+    nome: "",
     email: "",
-    password: "",
+    senha: "",
     confirmPassword: "",
+    cpf: "",
+    matricula: "",
   });
-  
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.senha !== formData.confirmPassword) {
       setErro("As senhas não coincidem!");
       return;
     }
+    
+    const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
+    if (!passwordRegex.test(formData.senha)) {
+      setErro("A senha deve conter entre 6 e 20 caracteres, com pelo menos uma letra maiúscula, uma minúscula e um número.");
+      return;
+    }
 
+    if (formData.cpf.length !== 11) {
+      setErro("CPF deve conter 11 dígitos numéricos");
+      return;
+    }
+    if (formData.matricula.length < 10) {
+      setErro("Matrícula deve ter pelo menos 10 dígitos");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/usuarios/auto-cadastro", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: formData.name,
-          email: formData.email,
-          senha: formData.password
-        }),
+      await autoCadastro({
+        nome: formData.nome,
+        email: formData.email,
+        senha: formData.senha,
+        cpf: formData.cpf,
+        matricula: formData.matricula,
       });
-
-      const dataText = await response.text();
-
-      if (!response.ok) {
-        throw new Error(dataText || "Erro ao realizar o cadastro.");
-      }
-
       setSucesso(true);
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err: any) {
-      setErro(err.message || "Não foi possível conectar ao servidor.");
+      console.error("Erro detalhado:", err);
+      setErro(err.message || "Erro ao realizar cadastro. Verifique os dados.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,78 +71,70 @@ export function Register() {
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <h1 className="mb-2 text-2xl font-bold text-foreground">Criar Conta</h1>
-          <p className="text-muted-foreground">
-            Junte-se à nossa comunidade de leitores
-          </p>
+          <p className="text-muted-foreground">Junte-se à nossa comunidade de leitores</p>
         </div>
 
         <Card>
-          {sucesso && <p className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm text-center">Cadastro realizado! Aguarde aprovação.</p>}
-          {erro && <p className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm text-center">{erro}</p>}
+          {sucesso && (
+            <p className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm">
+              Cadastro realizado! Aguarde aprovação.
+            </p>
+          )}
+          {erro && (
+            <p className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm whitespace-pre-wrap">
+              {erro}
+            </p>
+          )}
 
           <form onSubmit={handleRegister} className="space-y-4">
             <Input
               label="Nome completo"
-              type="text"
-              placeholder="Seu nome"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.nome}
+              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
               required
             />
-
             <Input
               label="E-mail"
               type="email"
-              placeholder="seu@email.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
             />
-
+            <Input
+              label="CPF (apenas números)"
+              value={formData.cpf}
+              onChange={(e) => setFormData({ ...formData, cpf: e.target.value.replace(/\D/g, "") })}
+              maxLength={11}
+              required
+            />
+            <Input
+              label="Matrícula"
+              value={formData.matricula}
+              onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
+              required
+            />
             <Input
               label="Senha"
               type="password"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              value={formData.senha}
+              onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
               required
             />
-
             <Input
               label="Confirmar senha"
               type="password"
-              placeholder="••••••••"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
             />
-
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary" required />
-              <span className="text-sm text-muted-foreground">
-                Concordo com os{" "}
-                <a href="#" className="text-primary hover:text-primary/80">
-                  Termos de Uso
-                </a>{" "}
-                e{" "}
-                <a href="#" className="text-primary hover:text-primary/80">
-                  Política de Privacidade
-                </a>
-              </span>
-            </label>
-
-            <Button type="submit" className="w-full">
-              Criar Conta
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Cadastrando..." : "Criar Conta"}
             </Button>
           </form>
-
           <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Já tem uma conta?{" "}
-              <Link to="/login" className="text-primary hover:text-primary/80 transition-colors font-medium">
-                Fazer login
-              </Link>
-            </p>
+            <Link to="/login" className="text-primary hover:underline">
+              Já tem conta? Faça login
+            </Link>
           </div>
         </Card>
       </div>

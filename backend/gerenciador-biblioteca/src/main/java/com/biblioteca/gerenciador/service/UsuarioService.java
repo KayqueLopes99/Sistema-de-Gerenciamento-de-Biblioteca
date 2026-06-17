@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +44,7 @@ public class UsuarioService {
                 usuario.getNome());
 
         return new LoginResponseDTO(
+                usuario.getIdUsuario(),
                 token,
                 usuario.getTipoUsuario().name(),
                 usuario.getNome(),
@@ -167,5 +169,10 @@ public class UsuarioService {
             throw new RuntimeException(
                     "Acesso negado: O cadastro é permitido apenas para e-mails institucionais da UFERSA ou contas Gmail autorizadas.");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<Leitor> listarTodosLeitores() {
+        return leitorRepository.findAll();
     }
 }

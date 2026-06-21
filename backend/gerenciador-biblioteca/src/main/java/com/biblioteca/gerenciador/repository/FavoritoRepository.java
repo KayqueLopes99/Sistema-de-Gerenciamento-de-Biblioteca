@@ -9,4 +9,5 @@ public interface FavoritoRepository extends JpaRepository<Favorito, Integer> {
     List<Favorito> findByLeitorIdUsuario(int idLeitor);
     Optional<Favorito> findByLeitorIdUsuarioAndObraIdObra(int idLeitor, int idObra);
     void deleteByLeitorIdUsuarioAndObraIdObra(int idLeitor, int idObra);
+    long countByObraIdObra(int idObra);
 }

@@ -6,6 +6,7 @@ import com.biblioteca.gerenciador.enums.StatusExemplar;
 import com.biblioteca.gerenciador.model.Exemplar;
 import com.biblioteca.gerenciador.model.Localizacao;
 import com.biblioteca.gerenciador.model.Obra;
+import com.biblioteca.gerenciador.repository.EmprestimoRepository; 
 import com.biblioteca.gerenciador.repository.ExemplarRepository;
 import com.biblioteca.gerenciador.repository.LocalizacaoRepository;
 import com.biblioteca.gerenciador.repository.ObraRepository;
@@ -22,6 +23,7 @@ public class ExemplarService {
     private final ExemplarRepository exemplarRepository;
     private final ObraRepository obraRepository;
     private final LocalizacaoRepository localizacaoRepository;
+    private final EmprestimoRepository emprestimoRepository; 
 
     @Transactional
     public void cadastrarExemplar(ExemplarRequestDTO dto) {
@@ -73,9 +75,17 @@ public class ExemplarService {
 
     @Transactional
     public void removerExemplar(int id) {
-        if (!exemplarRepository.existsById(id)) {
-            throw new RuntimeException("Exemplar não encontrado para remoção");
+        Exemplar exemplar = exemplarRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exemplar não encontrado para remoção"));
+
+        boolean possuiEmprestimoAtivo = emprestimoRepository
+                .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(exemplar.getIdExemplar())
+                .isPresent();
+
+        if (possuiEmprestimoAtivo) {
+            throw new RuntimeException("Não é possível remover o exemplar, pois ele possui um empréstimo ativo.");
         }
+
         exemplarRepository.deleteById(id);
     }
 
@@ -92,25 +102,19 @@ public class ExemplarService {
                 .orElseThrow(() -> new RuntimeException("Localização não encontrada"));
 
         exemplar.setLocalizacao(localizacao);
-        
         exemplarRepository.save(exemplar);
     }
 
     public DisponibilidadeDTO consultarDisponibilidade(int idObra) {
-        
         List<Exemplar> exemplaresDisponiveis = exemplarRepository.findByObraIdObraAndStatus(idObra, StatusExemplar.DISPONIVEL);
-
         boolean estaDisponivel = !exemplaresDisponiveis.isEmpty();
-        
-        
         List<String> localizacoes = exemplaresDisponiveis.stream()
-            .map(ex -> {
-                Localizacao loc = ex.getLocalizacao();
-                return String.format("%s, %s, %s", loc.getSala(), loc.getEstante(), loc.getSessao());
-            })
-            .distinct() 
-            .toList();
-
+                .map(ex -> {
+                    Localizacao loc = ex.getLocalizacao();
+                    return String.format("%s, %s, %s", loc.getSala(), loc.getEstante(), loc.getSessao());
+                })
+                .distinct()
+                .toList();
         return new DisponibilidadeDTO(estaDisponivel, localizacoes);
     }
 

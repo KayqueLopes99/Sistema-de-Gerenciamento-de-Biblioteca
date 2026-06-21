@@ -12,6 +12,7 @@ import com.biblioteca.gerenciador.repository.AvaliacaoRepository;
 import com.biblioteca.gerenciador.repository.CategoriaRepository;
 import com.biblioteca.gerenciador.repository.EmprestimoRepository;
 import com.biblioteca.gerenciador.repository.ExemplarRepository;
+import com.biblioteca.gerenciador.repository.FavoritoRepository;
 import com.biblioteca.gerenciador.repository.ObraRepository;
 import com.biblioteca.gerenciador.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class ObraService {
     private final ExemplarRepository exemplarRepository;
     private final EmprestimoRepository emprestimoRepository;
     private final ReservaRepository reservaRepository;
+    private final FavoritoRepository favoritoRepository;
 
     @Transactional
     public void cadastrarObra(ObraRequestDTO dto) {
@@ -139,6 +141,16 @@ public class ObraService {
         long reservasPendentes = reservaRepository.countByObraAndStatus(obra, StatusReserva.PENDENTE);
         if (reservasPendentes > 0) {
             throw new RuntimeException("Não é possível remover a obra, pois há reservas pendentes.");
+        }
+
+        List<Avaliacao> avaliacoes = avaliacaoRepository.findByObraIdObra(idObra);
+        if (!avaliacoes.isEmpty()) {
+            throw new RuntimeException("Não é possível remover a obra, pois existem avaliações associadas. Remova as avaliações primeiro.");
+        }
+
+        long favoritosCount = favoritoRepository.countByObraIdObra(idObra); 
+        if (favoritosCount > 0) {
+            throw new RuntimeException("Não é possível remover a obra, pois existem favoritos associados. Remova os favoritos primeiro.");
         }
 
         obraRepository.deleteById(idObra);

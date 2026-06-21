@@ -12,18 +12,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Sempre inicia com null, ignorando qualquer dado salvo
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const [token, setToken] = useState<string | null>(sessionStorage.getItem("token"));
+  const [user, setUser] = useState<any | null>(() => {
+    const saved = sessionStorage.getItem("user");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const login = (newToken: string, userData: any) => {
-    // Não salva em localStorage, apenas no estado
+    sessionStorage.setItem("token", newToken);
+    sessionStorage.setItem("user", JSON.stringify(userData));
     setToken(newToken);
     setUser(userData);
   };
 
   const logout = () => {
-    // Limpa estado
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setToken(null);
     setUser(null);
   };

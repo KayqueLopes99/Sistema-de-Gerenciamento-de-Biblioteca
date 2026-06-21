@@ -30,17 +30,28 @@ export function UserProfile() {
   async function loadUserData() {
     setLoading(true);
     try {
+      
+      if (user?.tipo !== "LEITOR") {
+        setActiveLoans([]);
+        setLoanHistory([]);
+        setFavoritos([]);
+        setLoading(false);
+        return; 
+      }
+
       const [ativos, historico, favs] = await Promise.all([
         meusEmprestimos(user!.id),
         historicoLeitor(user!.id),
         listarFavoritos(),
       ]);
+
       setActiveLoans(ativos.filter((l: any) => !l.dataDevolucaoReal));
       setLoanHistory(historico);
       setFavoritos(favs);
+
     } catch (error: any) {
-      console.error("Erro ao carregar dados do usuário:", error);
-      toast.error("Não foi possível carregar seus dados.");
+      console.error("Erro ao carregar dados do utilizador:", error);
+      toast.error("Não foi possível carregar os dados.");
     } finally {
       setLoading(false);
     }
@@ -126,9 +137,7 @@ export function UserProfile() {
                   <Edit className="w-4 h-4 mr-2" />
                   Editar Perfil
                 </Button>
-                <Button variant="outline" className="w-full">
-                  Alterar Senha
-                </Button>
+
               </div>
             )}
           </Card>

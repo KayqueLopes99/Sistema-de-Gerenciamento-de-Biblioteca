@@ -30,6 +30,8 @@ export function Login() {
         throw new Error("Token não recebido do servidor.");
       }
 
+      localStorage.setItem("token", data.token);
+
       authLogin(data.token, {
         id: data.id || 0,
         email: data.email,

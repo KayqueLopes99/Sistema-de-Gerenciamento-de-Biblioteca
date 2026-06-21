@@ -38,10 +38,16 @@ export function Dashboard() {
         }
       }
 
-      if (isAuthenticated && user) {
-        const loans = await meusEmprestimos(user.id);
-        const activeLoans = loans.filter((l: any) => !l.dataDevolucaoReal);
-        setActiveLoansCount(activeLoans.length);
+      if (isAuthenticated && user && user.tipo === "LEITOR") {
+        try {
+          const loans = await meusEmprestimos(user.id);
+          const activeLoans = loans.filter((l: any) => !l.dataDevolucaoReal);
+          setActiveLoansCount(activeLoans.length);
+        } catch (err) {
+          console.warn("Aviso ao carregar empréstimos:", err);
+        }
+      } else {
+        setActiveLoansCount(0);
       }
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);

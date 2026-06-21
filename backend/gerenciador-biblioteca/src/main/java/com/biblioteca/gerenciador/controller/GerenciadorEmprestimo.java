@@ -29,7 +29,7 @@ public class GerenciadorEmprestimo {
         }
     }
 
-    @PreAuthorize("hasRole('LEITOR')")
+    @PreAuthorize("hasAnyRole('LEITOR', 'BIBLIOTECARIO')")
     @GetMapping("/meus-emprestimos/{idLeitor}")
     public ResponseEntity<?> consultarMeusEmprestimos(@PathVariable int idLeitor) {
         try {
@@ -110,8 +110,9 @@ public class GerenciadorEmprestimo {
         }
     }
 
-    @PreAuthorize("hasRole('LEITOR')")
+    @PreAuthorize("hasAnyRole('LEITOR', 'BIBLIOTECARIO')")
     @GetMapping("/historico-leitura/{idLeitor}")
+    
     public ResponseEntity<?> visualizarHistoricoLeitura(@PathVariable int idLeitor) {
         try {
             List<Emprestimo> historico = emprestimoService.visualizarHistoricoLeitura(idLeitor);

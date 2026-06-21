@@ -3,17 +3,24 @@ package com.biblioteca.gerenciador.service;
 import com.biblioteca.gerenciador.dto.ObraRequestDTO;
 import com.biblioteca.gerenciador.model.Avaliacao;
 import com.biblioteca.gerenciador.model.Categoria;
+// import com.biblioteca.gerenciador.model.Emprestimo;
+import com.biblioteca.gerenciador.model.Exemplar;
 import com.biblioteca.gerenciador.model.Obra;
+// import com.biblioteca.gerenciador.model.Reserva;
+import com.biblioteca.gerenciador.enums.StatusReserva;
 import com.biblioteca.gerenciador.repository.AvaliacaoRepository;
 import com.biblioteca.gerenciador.repository.CategoriaRepository;
-import lombok.RequiredArgsConstructor;
+import com.biblioteca.gerenciador.repository.EmprestimoRepository;
+import com.biblioteca.gerenciador.repository.ExemplarRepository;
 import com.biblioteca.gerenciador.repository.ObraRepository;
+import com.biblioteca.gerenciador.repository.ReservaRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +29,9 @@ public class ObraService {
     private final ObraRepository obraRepository;
     private final CategoriaRepository categoriaRepository;
     private final AvaliacaoRepository avaliacaoRepository;
+    private final ExemplarRepository exemplarRepository;
+    private final EmprestimoRepository emprestimoRepository;
+    private final ReservaRepository reservaRepository;
 
     @Transactional
     public void cadastrarObra(ObraRequestDTO dto) {
@@ -113,8 +123,22 @@ public class ObraService {
 
     @Transactional
     public void removerObra(int idObra) {
-        if (!obraRepository.existsById(idObra)) {
-            throw new RuntimeException("Obra não encontrada para remoção");
+        Obra obra = obraRepository.findById(idObra)
+                .orElseThrow(() -> new RuntimeException("Obra não encontrada para remoção"));
+
+        List<Exemplar> exemplares = exemplarRepository.findByObra_IdObra(idObra);
+        for (Exemplar ex : exemplares) {
+            boolean temEmprestimoAtivo = emprestimoRepository
+                    .findByExemplar_IdExemplarAndDataDevolucaoRealIsNull(ex.getIdExemplar())
+                    .isPresent();
+            if (temEmprestimoAtivo) {
+                throw new RuntimeException("Não é possível remover a obra, pois há exemplares com empréstimos ativos.");
+            }
+        }
+
+        long reservasPendentes = reservaRepository.countByObraAndStatus(obra, StatusReserva.PENDENTE);
+        if (reservasPendentes > 0) {
+            throw new RuntimeException("Não é possível remover a obra, pois há reservas pendentes.");
         }
 
         obraRepository.deleteById(idObra);
@@ -123,17 +147,14 @@ public class ObraService {
     public Obra buscarPorId(int idObra) {
         return obraRepository.findById(idObra)
                 .orElseThrow(() -> new RuntimeException("Obra não encontrada com o ID: " + idObra));
-        }
+    }
 
-        public List<Obra> buscarRecomendados() {
-        // Pega obras com média de avaliação >= 4.5
+    public List<Obra> buscarRecomendados() {
         List<Obra> todas = obraRepository.findAll();
-        // Filtra e ordena por nota (simulado – ideal seria uma query com join e AVG)
-        // Para não complicar, pegamos as 6 mais recentes com maior nota (ajustável)
         return todas.stream()
                 .sorted((o1, o2) -> Double.compare(
-                    getMediaAvaliacoes(o2.getIdObra()),
-                    getMediaAvaliacoes(o1.getIdObra())
+                        getMediaAvaliacoes(o2.getIdObra()),
+                        getMediaAvaliacoes(o1.getIdObra())
                 ))
                 .limit(6)
                 .collect(Collectors.toList());

@@ -124,7 +124,7 @@ export function BookDetails() {
       toast.success("Avaliação enviada com sucesso!");
       setUserRating(0);
       setUserComment("");
-      loadBookData(); 
+      loadBookData();
     } catch (error: any) {
       toast.error(error.message);
     }

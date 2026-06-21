@@ -16,7 +16,7 @@ export const router = createBrowserRouter([
   { path: "/register", Component: Register },
   {
     path: "/",
-    Component: Layout,
+    element: <ProtectedRoute><Layout /></ProtectedRoute>,
     children: [
       { index: true, Component: Dashboard },
       { path: "catalog", Component: Catalog },

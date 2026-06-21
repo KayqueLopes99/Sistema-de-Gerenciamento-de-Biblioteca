@@ -310,7 +310,6 @@ public class EmprestimoService {
 
     @Transactional(readOnly = true)
     public List<Emprestimo> listarEmprestimosAtivos() {
-        // Retorna todos os empréstimos não devolvidos (dataDevolucaoReal nula)
         return emprestimoRepository.findByDataDevolucaoRealIsNull();
     }
 }

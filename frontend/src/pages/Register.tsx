@@ -4,7 +4,7 @@ import { Card } from "../components/Card";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { autoCadastro } from "../services/api";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Eye, EyeOff } from "lucide-react";
 
 export function Register() {
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ export function Register() {
     cpf: "",
     matricula: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export function Register() {
       setErro("As senhas não coincidem!");
       return;
     }
-    
+
     const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
     if (!passwordRegex.test(formData.senha)) {
       setErro("A senha deve conter entre 6 e 20 caracteres, com pelo menos uma letra maiúscula, uma minúscula e um número.");
@@ -113,20 +115,40 @@ export function Register() {
               onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
               required
             />
-            <Input
-              label="Senha"
-              type="password"
-              value={formData.senha}
-              onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-              required
-            />
-            <Input
-              label="Confirmar senha"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              required
-            />
+            <div className="relative">
+              <Input
+                label="Senha"
+                type={showPassword ? "text" : "password"}
+                value={formData.senha}
+                onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-[42px] text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className="relative">
+              <Input
+                label="Confirmar senha"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-[42px] text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Cadastrando..." : "Criar Conta"}
             </Button>

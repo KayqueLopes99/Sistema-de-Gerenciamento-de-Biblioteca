@@ -23,4 +23,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
     boolean existsByObraAndStatusAndLeitorNot(Obra obra, StatusReserva status, Leitor leitor);
 
     long countByObraAndStatus(Obra obra, StatusReserva status);
+
+    List<Reserva> findByStatus(StatusReserva status);
+
+    List<Reserva> findByStatusOrderByDataReservaAsc(StatusReserva status);
 }

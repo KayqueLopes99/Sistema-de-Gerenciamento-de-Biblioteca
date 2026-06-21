@@ -323,3 +323,33 @@ export async function listarCategorias(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/categorias`);
   return handleResponse(res);
 }
+
+export async function listarReservasPendentes(): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/emprestimos/reservas/pendentes`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function atenderReserva(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/emprestimos/reservas/${id}/atender`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  await handleResponse(res);
+}
+
+export async function cancelarReserva(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/emprestimos/reservas/${id}/cancelar`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  await handleResponse(res);
+}
+
+export async function listarTodosEmprestimos(): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/emprestimos/todos`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}

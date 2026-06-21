@@ -5,6 +5,7 @@ import ExemplaresTab from "./ExemplaresTab";
 import LocalizacoesTab from "./LocalizacoesTab";
 import LeitoresTab from "./LeitoresTab";
 import EmprestimosTab from "./EmprestimosTab";
+import ReservasTab from "./ReservasTab";
 
 const tabs = [
   { id: "obras", label: "Obras" },
@@ -12,6 +13,7 @@ const tabs = [
   { id: "localizacoes", label: "Localizações" },
   { id: "leitores", label: "Leitores" },
   { id: "emprestimos", label: "Empréstimos" },
+  { id: "reservas", label: "Reservas" },
 ];
 
 export function Admin() {
@@ -41,6 +43,7 @@ export function Admin() {
           {activeTab === "localizacoes" && <LocalizacoesTab />}
           {activeTab === "leitores" && <LeitoresTab />}
           {activeTab === "emprestimos" && <EmprestimosTab />}
+          {activeTab === "reservas" && <ReservasTab />}
         </Card>
       </div>
     </div>

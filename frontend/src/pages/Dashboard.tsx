@@ -4,7 +4,7 @@ import { Card } from "../components/Card";
 import { BookCard } from "../components/BookCard";
 import { Button } from "../components/Button";
 import { useAuth } from "../context/AuthContext";
-import { buscarObras, meusEmprestimos, listarLeitores, buscarRecomendados } from "../services/api";
+import { buscarObras, meusEmprestimos, listarLeitores, buscarRecomendados, listarEmprestimosAtivos } from "../services/api";
 import { BookOpen, Clock, TrendingUp, Users } from "lucide-react";
 
 export function Dashboard() {
@@ -14,6 +14,7 @@ export function Dashboard() {
   const [activeUsersCount, setActiveUsersCount] = useState(0);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalActiveLoans, setTotalActiveLoans] = useState(0);
 
   useEffect(() => {
     loadDashboardData();
@@ -54,6 +55,15 @@ export function Dashboard() {
     } finally {
       setLoading(false);
     }
+
+    if (isBibliotecario) {
+      try {
+        const ativos = await listarEmprestimosAtivos();
+        setTotalActiveLoans(ativos.length);
+      } catch (err) {
+        console.warn("Não foi possível carregar empréstimos ativos", err);
+      }
+    }
   }
 
   return (
@@ -81,17 +91,31 @@ export function Dashboard() {
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-secondary to-secondary/80 text-accent border-0">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-accent/80 mb-1">Meus Empréstimos</p>
-                <h2 className="text-accent">{activeLoansCount}</h2>
+          {isBibliotecario ? (
+            <Card className="bg-gradient-to-br from-secondary to-secondary/80 text-accent border-0">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-accent/80 mb-1">Empréstimos Totais</p>
+                  <h2 className="text-accent">{totalActiveLoans}</h2>
+                </div>
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6" />
+            </Card>
+          ) : (
+            <Card className="bg-gradient-to-br from-secondary to-secondary/80 text-accent border-0">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-accent/80 mb-1">Meus Empréstimos</p>
+                  <h2 className="text-accent">{activeLoansCount}</h2>
+                </div>
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6" />
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           <Card className="bg-gradient-to-br from-accent to-accent/80 text-white border-0">
             <div className="flex items-start justify-between">

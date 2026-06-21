@@ -15,6 +15,8 @@ import com.biblioteca.gerenciador.repository.LeitorRepository;
 import com.biblioteca.gerenciador.repository.ObraRepository;
 import com.biblioteca.gerenciador.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -63,7 +65,6 @@ public class EmprestimoService {
         Emprestimo emprestimo = emprestimoRepository.findById(dto.getIdEmprestimo())
                 .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado"));
 
-        // Verifica se o empréstimo pertence ao leitor (segurança)
         if (emprestimo.getLeitor().getIdUsuario() != dto.getIdLeitor()) {
             throw new RuntimeException("Este empréstimo não pertence ao leitor informado");
         }
@@ -312,4 +313,72 @@ public class EmprestimoService {
     public List<Emprestimo> listarEmprestimosAtivos() {
         return emprestimoRepository.findByDataDevolucaoRealIsNull();
     }
+
+    public List<Reserva> listarReservasPendentes() {
+        return reservaRepository.findByStatus(StatusReserva.PENDENTE);
+    }
+
+    @Transactional
+    public void atenderReserva(int idReserva) {
+        Reserva reserva = reservaRepository.findById(idReserva)
+                .orElseThrow(() -> new RuntimeException("Reserva não encontrada"));
+        if (reserva.getStatus() != StatusReserva.PENDENTE) {
+            throw new RuntimeException("Esta reserva não está pendente");
+        }
+        reserva.setStatus(StatusReserva.ATENDIDA);
+        reservaRepository.save(reserva);
+    }
+
+    @Transactional
+    public void cancelarReserva(int idReserva) {
+        Reserva reserva = reservaRepository.findById(idReserva)
+                .orElseThrow(() -> new RuntimeException("Reserva não encontrada"));
+        if (reserva.getStatus() != StatusReserva.PENDENTE) {
+            throw new RuntimeException("Esta reserva não está pendente");
+        }
+        reserva.setStatus(StatusReserva.CANCELADA);
+        reservaRepository.save(reserva);
+    }
+
+    public List<Emprestimo> listarTodosEmprestimos() {
+        return emprestimoRepository.findAll();
+    }
+
+    @Transactional
+public void solicitarReservaLeitor(int idObra) {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    Leitor leitor = leitorRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Leitor não encontrado"));
+    Obra obra = obraRepository.findById(idObra)
+            .orElseThrow(() -> new RuntimeException("Obra não encontrada"));
+
+    if (leitor.getStatusLeitor() != StatusLeitor.ATIVO) {
+        throw new RuntimeException("Leitor não está ativo para realizar reservas");
+    }
+    if (leitor.getDataFimSuspensao() != null && leitor.getDataFimSuspensao().isAfter(LocalDate.now())) {
+        throw new RuntimeException("Leitor está suspenso até " + leitor.getDataFimSuspensao());
+    }
+
+    long reservasAtivas = reservaRepository.countByLeitorAndStatus(leitor, StatusReserva.PENDENTE);
+    if (reservasAtivas >= MAX_RESERVAS_ATIVAS) {
+        throw new RuntimeException("Limite de reservas ativas atingido (máximo " + MAX_RESERVAS_ATIVAS + ")");
+    }
+
+    boolean jaTemReserva = reservaRepository.existsByObraAndStatus(obra, StatusReserva.PENDENTE);
+    if (jaTemReserva) {
+        throw new RuntimeException("Já existe uma reserva pendente para esta obra");
+    }
+
+    boolean temExemplarDisponivel = exemplarRepository.existsByObraAndStatus(obra, StatusExemplar.DISPONIVEL);
+    if (temExemplarDisponivel) {
+        throw new RuntimeException("Não é possível reservar. A obra possui exemplares disponíveis para empréstimo.");
+    }
+
+    Reserva reserva = new Reserva();
+    reserva.setLeitor(leitor);
+    reserva.setObra(obra);
+    reserva.setDataReserva(LocalDate.now());
+    reserva.setStatus(StatusReserva.PENDENTE);
+    reservaRepository.save(reserva);
+}
 }

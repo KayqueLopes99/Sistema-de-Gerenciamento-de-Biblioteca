@@ -101,9 +101,9 @@ public class GerenciadorEmprestimo {
 
     @PreAuthorize("hasRole('LEITOR')")
     @PostMapping("/solicitar-reserva")
-    public ResponseEntity<?> solicitarReserva(@RequestParam int idObra) {
+    public ResponseEntity<?> solicitarReservaLeitor(@RequestParam int idObra) {
         try {
-            emprestimoService.solicitarReserva(idObra);
+            emprestimoService.solicitarReservaLeitor(idObra);
             return ResponseEntity.ok().body("Reserva solicitada com sucesso");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -148,5 +148,39 @@ public class GerenciadorEmprestimo {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+    
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    @GetMapping("/reservas/pendentes")
+    public ResponseEntity<?> listarReservasPendentes() {
+        return ResponseEntity.ok(emprestimoService.listarReservasPendentes());
+    }
+
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    @PutMapping("/reservas/{id}/atender")
+    public ResponseEntity<?> atenderReserva(@PathVariable int id) {
+        try {
+            emprestimoService.atenderReserva(id);
+            return ResponseEntity.ok().body("Reserva atendida com sucesso");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    @PutMapping("/reservas/{id}/cancelar")
+    public ResponseEntity<?> cancelarReserva(@PathVariable int id) {
+        try {
+            emprestimoService.cancelarReserva(id);
+            return ResponseEntity.ok().body("Reserva cancelada");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
+    @GetMapping("/todos")
+    public ResponseEntity<?> listarTodosEmprestimos() {
+        return ResponseEntity.ok(emprestimoService.listarTodosEmprestimos());
     }
 }

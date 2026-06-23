@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,10 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource; 
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource; 
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
-import java.util.Arrays;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -29,15 +29,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
+            .cors(Customizer.withDefaults()) // Vai usar o bean corsFilter abaixo automaticamente
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera o OPTIONS para o preflight
                 .requestMatchers("/api/usuarios/login").permitAll()
                 .requestMatchers("/api/usuarios/auto-cadastro").permitAll()
-                .requestMatchers("/api/acervo/buscar").permitAll()  
+                .requestMatchers("/api/acervo/buscar").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/avaliacoes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/acervo/obras/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/acervo/localizacoes").permitAll()
@@ -50,25 +49,22 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-        
+
         return http.build();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "https://sistema-de-gerenciamento-de-biblioteca-*.vercel.app"
-        ));
-        
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true); 
-        
+    public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+        CorsConfiguration config = new CorsConfiguration();
+        
+        config.setAllowCredentials(true);
+        config.addAllowedOriginPattern("*"); // Aceita qualquer subdomínio da Vercel
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
     }
 
     @Bean

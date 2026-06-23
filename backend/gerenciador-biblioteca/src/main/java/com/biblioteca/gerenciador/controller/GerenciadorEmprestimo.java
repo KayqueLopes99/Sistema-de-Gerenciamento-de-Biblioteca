@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/emprestimos")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class GerenciadorEmprestimo {
 

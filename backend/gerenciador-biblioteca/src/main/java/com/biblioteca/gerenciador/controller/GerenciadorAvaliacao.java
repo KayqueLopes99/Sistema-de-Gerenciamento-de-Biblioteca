@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/avaliacoes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class GerenciadorAvaliacao {
 
     private final AvaliacaoService avaliacaoService;

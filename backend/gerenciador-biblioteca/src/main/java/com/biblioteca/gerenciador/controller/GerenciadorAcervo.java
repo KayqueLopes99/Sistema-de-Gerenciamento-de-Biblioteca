@@ -20,7 +20,6 @@ import com.biblioteca.gerenciador.model.Exemplar;
 @RestController
 @RequestMapping("/api/acervo")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 
 public class GerenciadorAcervo {
 

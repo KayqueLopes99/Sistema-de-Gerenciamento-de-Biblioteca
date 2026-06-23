@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping("/api/categorias")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class CategoriaController {
 

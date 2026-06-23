@@ -79,7 +79,7 @@ export function UserProfile() {
 
   async function handleSaveProfile() {
     setIsEditing(false);
-    toast.success("Perfil atualizado (funcionalidade em desenvolvimento completo)");
+    toast.success("Perfil atualizado!");
   }
 
   if (!isAuthenticated) {

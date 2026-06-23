@@ -58,7 +58,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        configuration.setAllowedOriginPatterns(Arrays.asList("https://sistema-de-gerenciamento-de-biblioteca-8dg8juj41.vercel.app"));
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "https://sistema-de-gerenciamento-de-biblioteca-*.vercel.app"
+        ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

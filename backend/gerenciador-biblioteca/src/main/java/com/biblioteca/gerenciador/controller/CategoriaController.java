@@ -5,6 +5,7 @@ import com.biblioteca.gerenciador.repository.CategoriaRepository;
 import com.biblioteca.gerenciador.repository.LocalizacaoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping("/api/categorias")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class CategoriaController {
 

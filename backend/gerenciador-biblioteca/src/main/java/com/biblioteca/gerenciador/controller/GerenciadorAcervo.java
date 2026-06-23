@@ -21,6 +21,7 @@ import com.biblioteca.gerenciador.model.Exemplar;
 @RequestMapping("/api/acervo")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+
 public class GerenciadorAcervo {
 
     private final ObraService obraService;

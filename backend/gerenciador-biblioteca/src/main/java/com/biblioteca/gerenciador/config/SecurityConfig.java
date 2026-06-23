@@ -29,11 +29,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) // Vai usar o bean corsFilter abaixo automaticamente
+            .cors(Customizer.withDefaults()) 
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera o OPTIONS para o preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
                 .requestMatchers("/api/usuarios/login").permitAll()
                 .requestMatchers("/api/usuarios/auto-cadastro").permitAll()
                 .requestMatchers("/api/acervo/buscar").permitAll()
@@ -54,18 +54,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        
-        config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*"); // Aceita qualquer subdomínio da Vercel
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        
-        source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
-    }
+public CorsFilter corsFilter() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    CorsConfiguration config = new CorsConfiguration();
+    
+    config.setAllowCredentials(true);
+    config.addAllowedOrigin("https://sistema-de-gerenciamento-de-bibliot-hazel.vercel.app/");
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
+    
+    source.registerCorsConfiguration("/**", config);
+    return new CorsFilter(source);
+}
 
     @Bean
     public PasswordEncoder passwordEncoder() {

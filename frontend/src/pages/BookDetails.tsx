@@ -89,7 +89,7 @@ export function BookDetails() {
       return;
     }
     try {
-      toast.error("Funcionalidade em desenvolvimento: peça ao bibliotecário para realizar o empréstimo.");
+      toast.error("Por favor: peça ao bibliotecário para realizar o empréstimo.");
     } catch (error: any) {
       toast.error(error.message);
     }

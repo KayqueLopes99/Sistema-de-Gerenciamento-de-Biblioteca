@@ -77,7 +77,7 @@ public class ObraService {
         }
 
         if (categoria != null && !categoria.isBlank()) {
-            return obraRepository.findByCategoriasNomeContainingIgnoreCase(categoria);
+            return obraRepository.buscarPorNomeCategoria(categoria);
         }
 
         if (termo != null && !termo.isBlank()) {
@@ -145,12 +145,14 @@ public class ObraService {
 
         List<Avaliacao> avaliacoes = avaliacaoRepository.findByObraIdObra(idObra);
         if (!avaliacoes.isEmpty()) {
-            throw new RuntimeException("Não é possível remover a obra, pois existem avaliações associadas. Remova as avaliações primeiro.");
+            throw new RuntimeException(
+                    "Não é possível remover a obra, pois existem avaliações associadas. Remova as avaliações primeiro.");
         }
 
-        long favoritosCount = favoritoRepository.countByObraIdObra(idObra); 
+        long favoritosCount = favoritoRepository.countByObraIdObra(idObra);
         if (favoritosCount > 0) {
-            throw new RuntimeException("Não é possível remover a obra, pois existem favoritos associados. Remova os favoritos primeiro.");
+            throw new RuntimeException(
+                    "Não é possível remover a obra, pois existem favoritos associados. Remova os favoritos primeiro.");
         }
 
         obraRepository.deleteById(idObra);
@@ -166,15 +168,15 @@ public class ObraService {
         return todas.stream()
                 .sorted((o1, o2) -> Double.compare(
                         getMediaAvaliacoes(o2.getIdObra()),
-                        getMediaAvaliacoes(o1.getIdObra())
-                ))
+                        getMediaAvaliacoes(o1.getIdObra())))
                 .limit(6)
                 .collect(Collectors.toList());
     }
 
     private double getMediaAvaliacoes(int idObra) {
         List<Avaliacao> avaliacoes = avaliacaoRepository.findByObraIdObra(idObra);
-        if (avaliacoes.isEmpty()) return 0;
+        if (avaliacoes.isEmpty())
+            return 0;
         return avaliacoes.stream().mapToInt(Avaliacao::getNota).average().orElse(0);
     }
 }

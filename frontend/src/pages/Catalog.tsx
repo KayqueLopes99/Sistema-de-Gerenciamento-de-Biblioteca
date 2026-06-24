@@ -96,7 +96,7 @@ export function Catalog() {
             >
               <option value="">Todas as categorias</option>
               {categorias.map((cat) => (
-                <option key={cat.idCategoria} value={cat.nome}>{cat.nome}</option>
+                <option key={cat.idCategoria} value={cat.idCategoria}>{cat.nome}</option>
               ))}
             </select>
 

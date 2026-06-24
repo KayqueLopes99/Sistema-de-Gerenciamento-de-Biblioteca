@@ -77,7 +77,7 @@ cd backend
 ```
 2. Compile e rode a aplicação:
 ```
-./mvnw spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 ### 1.3 Rodando o Frontend
 1. Navegue até a pasta do frontend:
@@ -94,7 +94,7 @@ npm run dev
 ```
 
 ### 2. Acessando a Aplicação Implantada
-- A aplicação se encontra disponível em: [https://sgb-frontend.vercel.app/](https://sgb-frontend.vercel.app/)
+- A aplicação se encontra disponível em: [https://sgb-frontend.vercel.app/](https://sistema-de-gerenciamento-de-bibliot-hazel.vercel.app/)
 
 
 
